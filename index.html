@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InSinkErator Price Tracker — Italy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:       #f0f2f5;
+      --card:     #ffffff;
+      --ink:      #0f172a;
+      --ink-2:    #475569;
+      --ink-3:    #94a3b8;
+      --border:   #e2e8f0;
+      --red:      #e11d48;
+      --green:    #16a34a;
+      --green-bg: #dcfce7;
+      --shadow:   0 1px 2px rgba(0,0,0,.05), 0 4px 16px rgba(0,0,0,.07);
+      --radius:   12px;
+
+      /* site palette */
+      --c-trovaincasso:         #1d4ed8;
+      --c-amazon:               #d97706;
+      --c-trovaprezzi:          #dc2626;
+      --c-pentoleprofessionali: #7c3aed;
+      --c-leroymerlin:          #15803d;
+      --c-default:              #64748b;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── HEADER ──────────────────────────────────────────────────────────── */
+    header {
+      background: var(--ink);
+      color: #fff;
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      height: 64px;
+      flex-wrap: wrap;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-dot {
+      width: 10px; height: 10px;
+      background: var(--red);
+      border-radius: 50%;
+      box-shadow: 0 0 0 3px rgba(225,29,72,.25);
+    }
+    .brand-name {
+      font-size: .9rem;
+      font-weight: 700;
+      letter-spacing: -.02em;
+      color: #fff;
+    }
+    .brand-sub {
+      font-size: .75rem;
+      color: var(--ink-3);
+      margin-left: 2px;
+    }
+    .header-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .stat-chip {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+    .stat-chip .label { font-size: .65rem; color: #64748b; text-transform: uppercase; letter-spacing: .07em; }
+    .stat-chip .value { font-size: .82rem; font-weight: 600; color: #e2e8f0; }
+
+    /* ── MAIN ────────────────────────────────────────────────────────────── */
+    main {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 32px 24px 48px;
+    }
+
+    /* ── LOADING / ERROR ─────────────────────────────────────────────────── */
+    #status {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 80px 24px;
+      color: var(--ink-2);
+    }
+    #status p { font-size: .9rem; }
+    .spinner {
+      width: 30px; height: 30px;
+      border: 3px solid var(--border);
+      border-top-color: var(--red);
+      border-radius: 50%;
+      animation: spin .75s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-box {
+      background: #fff1f2;
+      border: 1px solid #fecdd3;
+      color: #9f1239;
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-size: .85rem;
+      display: none;
+      margin-bottom: 24px;
+      line-height: 1.55;
+    }
+    .error-box code {
+      background: rgba(159,18,57,.1);
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-size: .82rem;
+      font-family: ui-monospace, monospace;
+    }
+
+    /* ── LEGEND ──────────────────────────────────────────────────────────── */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 20px;
+      margin-bottom: 28px;
+      align-items: center;
+    }
+    .legend-label {
+      font-size: .7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--ink-3);
+      margin-right: 4px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: .78rem;
+      color: var(--ink-2);
+    }
+    .legend-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ── CARDS GRID ──────────────────────────────────────────────────────── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(490px, 1fr));
+      gap: 18px;
+    }
+
+    /* ── CARD ────────────────────────────────────────────────────────────── */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .card-head {
+      padding: 18px 22px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .model-name {
+      font-size: .95rem;
+      font-weight: 700;
+      color: var(--ink);
+      letter-spacing: -.01em;
+    }
+    .model-spec {
+      font-size: .72rem;
+      color: var(--ink-3);
+      margin-top: 3px;
+      font-weight: 500;
+    }
+    .avg-pill {
+      flex-shrink: 0;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+      text-align: right;
+    }
+    .avg-pill .avg-lbl {
+      font-size: .6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--ink-3);
+    }
+    .avg-pill .avg-val {
+      font-size: .95rem;
+      font-weight: 700;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .card-body { padding: 12px 22px 18px; }
+
+    /* ── PRICE ROW ───────────────────────────────────────────────────────── */
+    .price-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 7px 0;
+    }
+    .price-row + .price-row {
+      border-top: 1px solid #f8fafc;
+    }
+    .site-pip {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .site-label {
+      font-size: .75rem;
+      color: var(--ink-2);
+      width: 148px;
+      flex-shrink: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 500;
+    }
+    .bar-track {
+      flex: 1;
+      height: 6px;
+      background: var(--bg);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width .5s cubic-bezier(.4,0,.2,1);
+      min-width: 4px;
+    }
+    .price-num {
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--ink);
+      width: 66px;
+      text-align: right;
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
+    }
+    .cheap-tag {
+      background: var(--green-bg);
+      color: var(--green);
+      font-size: .6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      padding: 2px 6px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .link-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px; height: 22px;
+      border-radius: 5px;
+      color: var(--ink-3);
+      text-decoration: none;
+      transition: background .15s, color .15s;
+      flex-shrink: 0;
+    }
+    .link-btn:hover {
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    /* ── SITE COLORS ─────────────────────────────────────────────────────── */
+    .pip-trovaincasso         { background: var(--c-trovaincasso); }
+    .bar-trovaincasso         { background: var(--c-trovaincasso); }
+    .pip-amazon               { background: var(--c-amazon); }
+    .bar-amazon               { background: var(--c-amazon); }
+    .pip-trovaprezzi          { background: var(--c-trovaprezzi); }
+    .bar-trovaprezzi          { background: var(--c-trovaprezzi); }
+    .pip-pentoleprofessionali { background: var(--c-pentoleprofessionali); }
+    .bar-pentoleprofessionali { background: var(--c-pentoleprofessionali); }
+    .pip-leroymerlin          { background: var(--c-leroymerlin); }
+    .bar-leroymerlin          { background: var(--c-leroymerlin); }
+    .pip-default              { background: var(--c-default); }
+    .bar-default              { background: var(--c-default); }
+
+    /* ── FOOTER ──────────────────────────────────────────────────────────── */
+    footer {
+      text-align: center;
+      padding: 24px 16px 32px;
+      font-size: .72rem;
+      color: var(--ink-3);
+    }
+    footer a { color: var(--ink-3); text-underline-offset: 3px; }
+
+    /* ── RESPONSIVE ──────────────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      header { padding: 0 16px; gap: 12px; }
+      main   { padding: 20px 12px 40px; }
+      .grid  { grid-template-columns: 1fr; }
+      .site-label { width: 100px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-dot"></div>
+    <div>
+      <div class="brand-name">InSinkErator <span style="opacity:.45;font-weight:500">Price Tracker</span></div>
+      <div class="brand-sub">Italy · live from Google Sheets</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="stat-chip">
+      <span class="label">Models</span>
+      <span class="value" id="hdr-models">—</span>
+    </div>
+    <div class="stat-chip">
+      <span class="label">Sites</span>
+      <span class="value" id="hdr-sites">—</span>
+    </div>
+    <div class="stat-chip">
+      <span class="label">Updated</span>
+      <span class="value" id="hdr-date">—</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="error-box" id="err"></div>
+
+  <div id="status">
+    <div class="spinner"></div>
+    <p>Fetching live prices…</p>
+  </div>
+
+  <div id="content" style="display:none">
+    <div class="legend" id="legend"></div>
+    <div class="grid" id="grid"></div>
+  </div>
+</main>
+
+<footer>
+  Data scraped daily from
+  <a href="https://www.trovaincasso.it" target="_blank" rel="noopener">trovaincasso.it</a> ·
+  <a href="https://www.amazon.it" target="_blank" rel="noopener">amazon.it</a> ·
+  <a href="https://www.trovaprezzi.it" target="_blank" rel="noopener">trovaprezzi.it</a> ·
+  <a href="https://www.pentoleprofessionali.it" target="_blank" rel="noopener">pentoleprofessionali.it</a> ·
+  <a href="https://www.leroymerlin.it" target="_blank" rel="noopener">leroymerlin.it</a>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"
+        integrity="sha512-dfX5uYVXzyU8+KHqj8bjo7UkOdg18PaOtpa48djpNbZHwExddghZ+ZmzWT06R5v6NSk3ZUfsH6FNEDepLx9hPQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script>
+  const CSV_URL = 'https://docs.google.com/spreadsheets/d/16heQiZCaNRaAGNjmPTRbf2AxnO5NyxTIZPHMR6oJki0/gviz/tq?tqx=out:csv&sheet=Latest';
+
+  /* ── Model definitions ─────────────────────────────────────────────────
+     Order matters: first matching rule wins.  More specific rules come first.
+  ─────────────────────────────────────────────────────────────────────── */
+  const MODEL_RULES = [
+    {
+      key:  'LC-50 Professional',
+      spec: 'Commercial · multi-phase',
+      test: n => n.includes('lc-50') || n.includes('lc 50') || /lc\s*50/.test(n),
+    },
+    {
+      key:  'Evolution Plus 1000 EC',
+      spec: '1.00 HP · 4-phase · EC induction motor',
+      test: n => n.includes('1000'),
+    },
+    {
+      key:  'PRO750',
+      spec: '0.75 HP · Pro Series',
+      test: n => n.includes('pro750') || (n.includes('pro') && n.includes('series') && n.includes('750')),
+    },
+    {
+      key:  'Evolution Plus 750 EC',
+      spec: '0.75 HP · 3-phase · EC induction motor',
+      test: n => n.includes('750'),
+    },
+    {
+      key:  'Premium 700 EC',
+      spec: '0.75 HP · 2-phase · EC induction motor',
+      test: n => n.includes('700'),
+    },
+    {
+      key:  'Premium 550 EC',
+      spec: '0.50–0.55 HP · EC induction motor',
+      test: n => n.includes('550'),
+    },
+    {
+      key:  'Standard 460',
+      spec: 'Entry-level continuous feed',
+      test: n => n.includes('460'),
+    },
+    {
+      key:  'Badger 500',
+      spec: '0.50 HP · continuous feed',
+      test: n => n.includes('badger'),
+    },
+  ];
+
+  /* keywords that flag a row as an accessory / non-disposal product */
+  const SKIP_WORDS = [
+    'tappo','kit raccordo','kit colleg','blancocare','collarino',
+    'flangia','adattatore','guarnizione','stopper','copertura antispruzzo',
+    'pulsante','pezzo di','stazionario','cca-00','ledefense','led flang',
+    'gomma per','deflettore','paraspruzz','splash guard','setaccio',
+    'waste stopper','disposal stopper',
+  ];
+
+  /* ── Helpers ────────────────────────────────────────────────────────── */
+
+  function siteKey(site) {
+    if (site.includes('trovaincasso'))         return 'trovaincasso';
+    if (site.includes('amazon'))               return 'amazon';
+    if (site.includes('trovaprezzi'))          return 'trovaprezzi';
+    if (site.includes('pentole') || site.includes('professionali')) return 'pentoleprofessionali';
+    if (site.includes('leroy'))                return 'leroymerlin';
+    return 'default';
+  }
+
+  function canonicalModel(rawName) {
+    const n = rawName.toLowerCase();
+    /* must be InSinkErator-branded */
+    if (!n.includes('insinkerator') && !n.includes('insinkeratore')) return null;
+    /* skip accessories */
+    if (SKIP_WORDS.some(w => n.includes(w))) return null;
+
+    for (const rule of MODEL_RULES) {
+      if (rule.test(n)) return rule.key;
+    }
+    return null;
+  }
+
+  function specForModel(key) {
+    const r = MODEL_RULES.find(m => m.key === key);
+    return r ? r.spec : '';
+  }
+
+  function fmtEur(v) {
+    return '€ ' + v.toFixed(2).replace('.', ',');
+  }
+
+  function svgExternal() {
+    return `<svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+      <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+    </svg>`;
+  }
+
+  /* ── Grouping ───────────────────────────────────────────────────────── */
+
+  function groupRows(rows) {
+    const groups = {};
+
+    for (const row of rows) {
+      const model = canonicalModel(row.product_name);
+      if (!model) continue;
+
+      if (!groups[model]) groups[model] = {};
+      const sk = siteKey(row.site);
+      const key = sk + '|' + row.site; /* group by exact site within sk */
+
+      /* keep cheapest entry per site */
+      if (!groups[model][key] || row.price_eur < groups[model][key].price_eur) {
+        groups[model][key] = row;
+      }
+    }
+
+    /* flatten each model's map to a sorted array */
+    const result = {};
+    for (const [model, siteMap] of Object.entries(groups)) {
+      result[model] = Object.values(siteMap).sort((a, b) => a.price_eur - b.price_eur);
+    }
+    return result;
+  }
+
+  /* ── Card builder ───────────────────────────────────────────────────── */
+
+  function buildCard(model, rows) {
+    const prices  = rows.map(r => r.price_eur);
+    const minP    = Math.min(...prices);
+    const maxP    = Math.max(...prices);
+    const avg     = prices.reduce((a, b) => a + b, 0) / prices.length;
+    const spec    = specForModel(model);
+    const multi   = rows.length > 1;
+
+    const rowsHtml = rows.map(r => {
+      const sk       = siteKey(r.site);
+      const isMin    = r.price_eur === minP;
+      const barWidth = maxP > 0 ? Math.round((r.price_eur / maxP) * 100) : 100;
+      const cheapTag = (multi && isMin)
+        ? `<span class="cheap-tag">cheapest</span>`
+        : '';
+
+      return `<div class="price-row">
+        <span class="site-pip pip-${sk}"></span>
+        <span class="site-label" title="${r.site}">${r.site}</span>
+        <div class="bar-track">
+          <div class="bar-fill bar-${sk}" style="width:${barWidth}%"></div>
+        </div>
+        <span class="price-num">${fmtEur(r.price_eur)}</span>
+        ${cheapTag}
+        <a class="link-btn" href="${r.url}" target="_blank" rel="noopener"
+           title="View on ${r.site}">${svgExternal()}</a>
+      </div>`;
+    }).join('');
+
+    return `<div class="card">
+      <div class="card-head">
+        <div>
+          <div class="model-name">${model}</div>
+          ${spec ? `<div class="model-spec">${spec}</div>` : ''}
+        </div>
+        <div class="avg-pill">
+          <div class="avg-lbl">avg</div>
+          <div class="avg-val">${fmtEur(avg)}</div>
+        </div>
+      </div>
+      <div class="card-body">${rowsHtml}</div>
+    </div>`;
+  }
+
+  /* ── Legend builder ─────────────────────────────────────────────────── */
+
+  function buildLegend(sitesPresent) {
+    const SITE_LABELS = {
+      trovaincasso:         'trovaincasso.it',
+      amazon:               'amazon.it',
+      trovaprezzi:          'trovaprezzi.it',
+      pentoleprofessionali: 'pentoleprofessionali.it',
+      leroymerlin:          'leroymerlin.it',
+    };
+
+    const items = [...sitesPresent]
+      .filter(sk => SITE_LABELS[sk])
+      .map(sk =>
+        `<span class="legend-item">
+          <span class="legend-dot pip-${sk}"></span>${SITE_LABELS[sk]}
+        </span>`
+      ).join('');
+
+    return `<span class="legend-label">Sites</span>${items}`;
+  }
+
+  /* ── Render ─────────────────────────────────────────────────────────── */
+
+  function render(allRows) {
+    const groups = groupRows(allRows);
+
+    /* sort models by average price desc (most premium first) */
+    const sorted = Object.entries(groups).sort((a, b) => {
+      const avgA = a[1].reduce((s, r) => s + r.price_eur, 0) / a[1].length;
+      const avgB = b[1].reduce((s, r) => s + r.price_eur, 0) / b[1].length;
+      return avgB - avgA;
+    });
+
+    if (sorted.length === 0) {
+      document.getElementById('status').innerHTML =
+        '<p style="color:#64748b">No InSinkErator model data found in the sheet.</p>';
+      return;
+    }
+
+    /* collect unique site keys */
+    const sitesPresent = new Set(
+      allRows.map(r => siteKey(r.site)).filter(s => s !== 'default')
+    );
+
+    /* header stats */
+    const dates = allRows.map(r => r.date).filter(Boolean);
+    if (dates.length) document.getElementById('hdr-date').textContent = dates[0];
+    document.getElementById('hdr-models').textContent = sorted.length;
+    document.getElementById('hdr-sites').textContent  = sitesPresent.size;
+
+    document.getElementById('legend').innerHTML = buildLegend(sitesPresent);
+    document.getElementById('grid').innerHTML   = sorted.map(([m, rows]) => buildCard(m, rows)).join('');
+
+    document.getElementById('status').style.display  = 'none';
+    document.getElementById('content').style.display = 'block';
+  }
+
+  /* ── Fetch ──────────────────────────────────────────────────────────── */
+
+  Papa.parse(CSV_URL, {
+    download:        true,
+    header:          true,
+    dynamicTyping:   false,
+    skipEmptyLines:  true,
+    complete(results) {
+      const rows = results.data
+        .map(r => ({ ...r, price_eur: parseFloat(r.price_eur) }))
+        .filter(r => !isNaN(r.price_eur) && r.price_eur > 0);
+      render(rows);
+    },
+    error(err) {
+      document.getElementById('status').style.display = 'none';
+      const box = document.getElementById('err');
+      box.style.display = 'block';
+      const isLocal = location.protocol === 'file:';
+      box.innerHTML = isLocal
+        ? '<strong>CORS error</strong> — the browser blocks cross-origin requests from <code>file://</code>. ' +
+          'Serve this file over HTTP (e.g. <code>python3 -m http.server 8080</code>) or deploy to GitHub Pages.'
+        : 'Could not load data: ' + (err.message || err);
+    },
+  });
+</script>
+</body>
+</html>
