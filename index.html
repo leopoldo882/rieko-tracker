@@ -26,6 +26,7 @@
       --c-trovaprezzi:          #dc2626;
       --c-pentoleprofessionali: #7c3aed;
       --c-leroymerlin:          #15803d;
+      --c-bricobravo:           #0ea5e9;
       --c-default:              #64748b;
     }
 
@@ -309,6 +310,8 @@
     .bar-pentoleprofessionali { background: var(--c-pentoleprofessionali); }
     .pip-leroymerlin          { background: var(--c-leroymerlin); }
     .bar-leroymerlin          { background: var(--c-leroymerlin); }
+    .pip-bricobravo           { background: var(--c-bricobravo); }
+    .bar-bricobravo           { background: var(--c-bricobravo); }
     .pip-default              { background: var(--c-default); }
     .bar-default              { background: var(--c-default); }
 
@@ -371,12 +374,7 @@
 </main>
 
 <footer>
-  Data scraped daily from
-  <a href="https://www.trovaincasso.it" target="_blank" rel="noopener">trovaincasso.it</a> ·
-  <a href="https://www.amazon.it" target="_blank" rel="noopener">amazon.it</a> ·
-  <a href="https://www.trovaprezzi.it" target="_blank" rel="noopener">trovaprezzi.it</a> ·
-  <a href="https://www.pentoleprofessionali.it" target="_blank" rel="noopener">pentoleprofessionali.it</a> ·
-  <a href="https://www.leroymerlin.it" target="_blank" rel="noopener">leroymerlin.it</a>
+  Data scraped daily from <span id="footer-sites"></span>
 </footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"
@@ -449,6 +447,7 @@
     if (site.includes('trovaprezzi'))          return 'trovaprezzi';
     if (site.includes('pentole') || site.includes('professionali')) return 'pentoleprofessionali';
     if (site.includes('leroy'))                return 'leroymerlin';
+    if (site.includes('bricobravo'))           return 'bricobravo';
     return 'default';
   }
 
@@ -558,22 +557,12 @@
   /* ── Legend builder ─────────────────────────────────────────────────── */
 
   function buildLegend(sitesPresent) {
-    const SITE_LABELS = {
-      trovaincasso:         'trovaincasso.it',
-      amazon:               'amazon.it',
-      trovaprezzi:          'trovaprezzi.it',
-      pentoleprofessionali: 'pentoleprofessionali.it',
-      leroymerlin:          'leroymerlin.it',
-    };
-
-    const items = [...sitesPresent]
-      .filter(sk => SITE_LABELS[sk])
-      .map(sk =>
+    const items = sitesPresent
+      .map(site =>
         `<span class="legend-item">
-          <span class="legend-dot pip-${sk}"></span>${SITE_LABELS[sk]}
+          <span class="legend-dot pip-${siteKey(site)}"></span>${site}
         </span>`
       ).join('');
-
     return `<span class="legend-label">Sites</span>${items}`;
   }
 
@@ -595,19 +584,20 @@
       return;
     }
 
-    /* collect unique site keys */
-    const sitesPresent = new Set(
-      allRows.map(r => siteKey(r.site)).filter(s => s !== 'default')
-    );
+    /* collect unique raw site names from data */
+    const sitesPresent = [...new Set(allRows.map(r => r.site).filter(Boolean))].sort();
 
     /* header stats */
     const dates = allRows.map(r => r.date).filter(Boolean);
     if (dates.length) document.getElementById('hdr-date').textContent = dates[0];
     document.getElementById('hdr-models').textContent = sorted.length;
-    document.getElementById('hdr-sites').textContent  = sitesPresent.size;
+    document.getElementById('hdr-sites').textContent  = sitesPresent.length;
 
     document.getElementById('legend').innerHTML = buildLegend(sitesPresent);
     document.getElementById('grid').innerHTML   = sorted.map(([m, rows]) => buildCard(m, rows)).join('');
+    document.getElementById('footer-sites').innerHTML = sitesPresent
+      .map(s => `<a href="https://www.${s}" target="_blank" rel="noopener">${s}</a>`)
+      .join(' · ');
 
     document.getElementById('status').style.display  = 'none';
     document.getElementById('content').style.display = 'block';
