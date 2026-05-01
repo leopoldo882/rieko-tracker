@@ -106,8 +106,22 @@ def parse_price(raw: str) -> Optional[float]:
         return None
 
 
+_ACCESSORY_WORDS = re.compile(
+    r"\b(tappo|guarnizione|accessori[oa]|ricambio|filtro|flangia|coperchio|kit"
+    r"|splash|stopper|seal|spare\s*part|ricambi|1975)\b",
+    re.IGNORECASE,
+)
+
+
+def is_accessory(name: str) -> bool:
+    return bool(_ACCESSORY_WORDS.search(name))
+
+
 def make_row(site: str, name: str, price_raw: str, url: str) -> Optional[dict]:
-    """Build a result dict; returns None if the price cannot be parsed."""
+    """Build a result dict; returns None if the price cannot be parsed or the product is an accessory."""
+    if is_accessory(name):
+        log.debug("Skipping accessory: %s", name.strip())
+        return None
     price = parse_price(price_raw)
     if price is None or price <= 0:
         return None
