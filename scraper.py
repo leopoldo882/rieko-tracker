@@ -1,7 +1,8 @@
 """
 InSinkErator Italy Price Tracker
-Scrapes prices from trovaprezzi.it, trovaincasso.it, pentoleprofessionali.it,
-leroymerlin.it, and amazon.it, then saves results to CSV and Google Sheets.
+Scrapes prices from unieuro.it, eprice.it, mediaworld.it, trovaincasso.it,
+pentoleprofessionali.it, leroymerlin.it, and amazon.it, then saves results
+to CSV and Google Sheets.
 """
 
 import csv
@@ -121,44 +122,163 @@ def make_row(site: str, name: str, price_raw: str, url: str) -> Optional[dict]:
 
 # ── Scrapers ───────────────────────────────────────────────────────────────────
 
-def scrape_trovaprezzi() -> list[dict]:
+def scrape_unieuro() -> list[dict]:
     """
-    trovaprezzi.it — price-comparison listing for InSinkErator waste-disposal units.
-    Requires a session warmed up via the homepage; Safari/macOS UA bypasses their block.
-    Items: li.listing_item  Name: a.item_name  Price: .item_basic_price
+    unieuro.it — search for "insinkerator".
+    The site is an Ionic/Angular SPA; product data is loaded client-side, so
+    static scraping returns 0 results. A headless browser (e.g. Playwright) is
+    required for reliable extraction.
     """
-    site = "trovaprezzi.it"
-    base = "https://www.trovaprezzi.it"
-    url = f"{base}/prezzo_ferramenta_insinkerator_tritarifiuti.aspx"
+    site = "unieuro.it"
+    url = "https://www.unieuro.it/online/search/?q=insinkerator"
     log.info("Scraping %s …", site)
 
-    # Homepage warm-up seeds the session cookie that bypasses the 403
-    session = _make_session(ua=USER_AGENTS[0])  # Safari UA works; Chrome gets 403
-    session.get(base + "/", timeout=10)
-
-    resp = get(url, session=session)
+    resp = get(url)
     if resp is None:
         return []
 
     soup = BeautifulSoup(resp.text, "html.parser")
     results = []
 
-    for item in soup.select("li.listing_item"):
-        name_tag = item.select_one("a.item_name")
-        price_tag = item.select_one(".item_basic_price")
-        link_tag = name_tag  # the name link is the product link
+    for card in soup.select(
+        "[data-product-id], .product-card, .product-tile, "
+        "[class*='product-item'], [class*='ProductCard']"
+    ):
+        name_tag = card.select_one(
+            ".product-name, .product-title, h2 a, h3 a, [class*='name'] a"
+        )
+        price_tag = card.select_one(
+            ".price .value, [class*='price'] .value, [data-price], "
+            "span.price, [class*='price-box']"
+        )
+        link_tag = card.select_one("a[href]")
 
         if not (name_tag and price_tag):
             continue
 
-        product_url = name_tag.get("href", url)
+        product_url = link_tag["href"] if link_tag and link_tag.get("href") else url
         if product_url.startswith("/"):
-            product_url = base + product_url
+            product_url = "https://www.unieuro.it" + product_url
 
         row = make_row(site, name_tag.get_text(), price_tag.get_text(), product_url)
         if row:
             results.append(row)
 
+    if not results:
+        log.warning(
+            "unieuro.it returned 0 products — the site is a client-side SPA. "
+            "A headless browser (e.g. Playwright) is required."
+        )
+    log.info("  → %d products found", len(results))
+    return results
+
+
+def scrape_eprice() -> list[dict]:
+    """
+    eprice.it — search for "insinkerator".
+    The site is protected by Akamai bot detection; static requests receive a 403.
+    A headless browser (e.g. Playwright) is required.
+    """
+    site = "eprice.it"
+    url = "https://www.eprice.it/it/s/insinkerator/"
+    log.info("Scraping %s …", site)
+
+    resp = get(url)
+    if resp is None:
+        log.warning(
+            "eprice.it blocked the request (Akamai). "
+            "A headless browser is required."
+        )
+        return []
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+    results = []
+
+    for card in soup.select(
+        ".product-item, .product-thumb, li[class*='product'], "
+        "[class*='product-card'], article.product"
+    ):
+        name_tag = card.select_one(
+            "h2 a, h3 a, .product-name a, a.product-item-link, "
+            "[class*='name'] a, [itemprop='name']"
+        )
+        price_tag = card.select_one(
+            "span.price, .product-price, [class*='price'] span, "
+            "[itemprop='price'], .price-box .price"
+        )
+        link_tag = card.select_one("a[href]")
+
+        if not (name_tag and price_tag):
+            continue
+
+        product_url = link_tag["href"] if link_tag and link_tag.get("href") else url
+        if product_url.startswith("/"):
+            product_url = "https://www.eprice.it" + product_url
+
+        row = make_row(site, name_tag.get_text(), price_tag.get_text(), product_url)
+        if row:
+            results.append(row)
+
+    if not results:
+        log.warning(
+            "eprice.it returned 0 products — likely blocked by Akamai. "
+            "A headless browser is required."
+        )
+    log.info("  → %d products found", len(results))
+    return results
+
+
+def scrape_mediaworld() -> list[dict]:
+    """
+    mediaworld.it — search for "insinkerator".
+    The site is protected by Cloudflare; static requests receive a JS challenge.
+    A headless browser (e.g. Playwright) is required.
+    """
+    site = "mediaworld.it"
+    url = "https://www.mediaworld.it/it/search.html?q=insinkerator"
+    log.info("Scraping %s …", site)
+
+    resp = get(url)
+    if resp is None:
+        log.warning(
+            "mediaworld.it blocked the request (Cloudflare). "
+            "A headless browser is required."
+        )
+        return []
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+    results = []
+
+    for card in soup.select(
+        "[data-testid*='product'], .product-item, article[class*='product'], "
+        "[class*='ProductCard'], [class*='product-card']"
+    ):
+        name_tag = card.select_one(
+            "h2, h3, [class*='title'], [class*='name'], "
+            "[data-testid*='title'], [data-testid*='name']"
+        )
+        price_tag = card.select_one(
+            "[class*='price'], [data-testid*='price'], "
+            "span.price, .price-box"
+        )
+        link_tag = card.select_one("a[href]")
+
+        if not (name_tag and price_tag):
+            continue
+
+        product_url = link_tag["href"] if link_tag and link_tag.get("href") else url
+        if product_url.startswith("/"):
+            product_url = "https://www.mediaworld.it" + product_url
+
+        row = make_row(site, name_tag.get_text(), price_tag.get_text(), product_url)
+        if row:
+            results.append(row)
+
+    if not results:
+        log.warning(
+            "mediaworld.it returned 0 products — likely a Cloudflare JS challenge. "
+            "A headless browser is required."
+        )
     log.info("  → %d products found", len(results))
     return results
 
@@ -286,7 +406,6 @@ def scrape_amazon() -> list[dict]:
         # Price is split into whole and fraction parts
         whole = item.select_one(".a-price-whole")
         fraction = item.select_one(".a-price-fraction")
-        link_tag = item.select_one("h2 a[href]")
 
         if not (name_tag and whole):
             continue
@@ -295,9 +414,15 @@ def scrape_amazon() -> list[dict]:
         if fraction:
             price_raw = price_raw.rstrip(",.") + "," + fraction.get_text()
 
-        product_url = link_tag["href"] if link_tag and link_tag.get("href") else url
-        if product_url.startswith("/"):
-            product_url = "https://www.amazon.it" + product_url
+        # Use data-asin to build a direct product URL; avoids /sspa/click redirect URLs
+        asin = item.get("data-asin", "")
+        if asin:
+            product_url = f"https://www.amazon.it/dp/{asin}"
+        else:
+            link_tag = item.select_one("h2 a[href]")
+            product_url = link_tag["href"] if link_tag and link_tag.get("href") else url
+            if product_url.startswith("/"):
+                product_url = "https://www.amazon.it" + product_url
 
         row = make_row(site, name_tag.get_text(), price_raw, product_url)
         if row:
@@ -390,7 +515,9 @@ def upload_to_sheets(products: list[dict]) -> None:
 # ── Main ───────────────────────────────────────────────────────────────────────
 
 SCRAPERS = [
-    scrape_trovaprezzi,
+    scrape_unieuro,
+    scrape_eprice,
+    scrape_mediaworld,
     scrape_trovaincasso,
     scrape_pentoleprofessionali,
     scrape_leroymerlin,
