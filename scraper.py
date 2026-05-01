@@ -543,6 +543,220 @@ def scrape_plumbingshop() -> list[dict]:
     return results
 
 
+def scrape_lineadaincasso() -> list[dict]:
+    """
+    lineadaincasso.it — PrestaShop; search for "insinkerator".
+    Cards: article.product-miniature  Name: .product-title a
+    Price: span.price  URL: .product-title a[href]
+    """
+    site = "lineadaincasso.it"
+    url = "https://www.lineadaincasso.it/cerca?s=insinkerator"
+    log.info("Scraping %s …", site)
+
+    resp = get(url)
+    if resp is None:
+        return []
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+    results = []
+
+    for card in soup.select("article.product-miniature"):
+        name_tag = card.select_one(".product-title a")
+        price_tag = card.select_one("span.price")
+
+        if not (name_tag and price_tag):
+            continue
+
+        product_url = name_tag.get("href", url)
+
+        row = make_row(site, name_tag.get_text(), price_tag.get_text(), product_url)
+        if row:
+            results.append(row)
+
+    log.info("  → %d products found", len(results))
+    return results
+
+
+def scrape_opportunitycommerce() -> list[dict]:
+    """
+    opportunitycommerce.com — PrestaShop; search for "insinkerator".
+    Cards: article.product-miniature  Name: .product-title a
+    Price: [itemprop='price']  URL: a[href] (first link in card)
+    """
+    site = "opportunitycommerce.com"
+    url = "https://www.opportunitycommerce.com/it/ricerca?controller=search&s=insinkerator"
+    log.info("Scraping %s …", site)
+
+    resp = get(url)
+    if resp is None:
+        return []
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+    results = []
+
+    for card in soup.select("article.product-miniature"):
+        name_tag = card.select_one(".product-title a")
+        price_tag = card.select_one("[itemprop='price']")
+        link_tag = card.select_one("a[href]")
+
+        if not (name_tag and price_tag):
+            continue
+
+        product_url = link_tag["href"] if link_tag and link_tag.get("href") else url
+
+        row = make_row(site, name_tag.get_text(), price_tag.get_text(), product_url)
+        if row:
+            results.append(row)
+
+    log.info("  → %d products found", len(results))
+    return results
+
+
+def scrape_climaconvenienza() -> list[dict]:
+    """
+    climaconvenienza.it — Shopify; search for "insinkerator".
+    Cards: product-card (custom element)  Name: a.js-prod-link[aria-label]
+    Price: .price__current (first occurrence = current selling price)
+    URL: a.js-prod-link[href]
+    """
+    site = "climaconvenienza.it"
+    url = "https://www.climaconvenienza.it/search?q=insinkerator&type=product"
+    log.info("Scraping %s …", site)
+
+    resp = get(url)
+    if resp is None:
+        return []
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+    results = []
+
+    for card in soup.select("product-card"):
+        name_link = card.select_one("a.js-prod-link")
+        price_tag = card.select_one(".price__current")
+
+        if not (name_link and price_tag):
+            continue
+
+        name = name_link.get("aria-label", "") or name_link.get_text(strip=True)
+        price_text = price_tag.get_text(strip=True)
+
+        product_url = name_link.get("href", url)
+        if product_url.startswith("/"):
+            product_url = "https://www.climaconvenienza.it" + product_url
+
+        row = make_row(site, name, price_text, product_url)
+        if row:
+            results.append(row)
+
+    log.info("  → %d products found", len(results))
+    return results
+
+
+def scrape_vieffetrade() -> list[dict]:
+    """
+    vieffetrade.com — Magento 2 SPA; requires JavaScript to render product listings.
+    Static requests receive a JS-required notice; a headless browser is needed.
+    The scraper is included so it activates if the site ever serves pre-rendered HTML.
+    Cards: li.product-item  Name: a.product-item-link
+    Price: [data-price-type='finalPrice']  URL: a.product-item-link[href]
+    """
+    site = "vieffetrade.com"
+    url = "https://www.vieffetrade.com/catalogsearch/result/?q=insinkerator"
+    log.info("Scraping %s …", site)
+
+    resp = get(url)
+    if resp is None:
+        return []
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+    results = []
+
+    for card in soup.select("li.product-item, .product-item"):
+        name_tag = card.select_one(
+            "a.product-item-link, .product-item-link, [class*='product-name'] a"
+        )
+        price_tag = card.select_one(
+            "[data-price-type='finalPrice'], span.price, .price-box .price"
+        )
+        link_tag = card.select_one("a[href]")
+
+        if not (name_tag and price_tag):
+            continue
+
+        product_url = link_tag["href"] if link_tag and link_tag.get("href") else url
+        if product_url.startswith("/"):
+            product_url = "https://www.vieffetrade.com" + product_url
+
+        row = make_row(site, name_tag.get_text(), price_tag.get_text(), product_url)
+        if row:
+            results.append(row)
+
+    if not results:
+        log.warning(
+            "vieffetrade.com returned 0 products — the site is a Magento 2 SPA. "
+            "A headless browser (e.g. Playwright) is required."
+        )
+    log.info("  → %d products found", len(results))
+    return results
+
+
+def scrape_yeppon() -> list[dict]:
+    """
+    yeppon.it — protected by Cloudflare; static requests receive a 403 challenge.
+    A headless browser (e.g. Playwright) is required.
+    The scraper is included so it activates if Cloudflare protection is lifted.
+    """
+    site = "yeppon.it"
+    url = "https://www.yeppon.it/search?q=insinkerator"
+    log.info("Scraping %s …", site)
+
+    resp = get(url)
+    if resp is None:
+        log.warning(
+            "yeppon.it blocked the request (Cloudflare). "
+            "A headless browser is required."
+        )
+        return []
+
+    if resp.status_code == 403 or "challenge" in resp.text[:500].lower():
+        log.warning(
+            "yeppon.it: Cloudflare challenge page returned. "
+            "A headless browser is required for this site."
+        )
+        return []
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+    results = []
+
+    for card in soup.select(
+        ".product-card, [class*='product-item'], article[class*='product'], li.product"
+    ):
+        name_tag = card.select_one(
+            "h2, h3, [class*='title'], [class*='name'], a[class*='product']"
+        )
+        price_tag = card.select_one("[class*='price'], span.price")
+        link_tag = card.select_one("a[href]")
+
+        if not (name_tag and price_tag):
+            continue
+
+        product_url = link_tag["href"] if link_tag and link_tag.get("href") else url
+        if product_url.startswith("/"):
+            product_url = "https://www.yeppon.it" + product_url
+
+        row = make_row(site, name_tag.get_text(), price_tag.get_text(), product_url)
+        if row:
+            results.append(row)
+
+    if not results:
+        log.warning(
+            "yeppon.it returned 0 products — likely blocked by Cloudflare. "
+            "A headless browser is required."
+        )
+    log.info("  → %d products found", len(results))
+    return results
+
+
 def scrape_amazon() -> list[dict]:
     """
     amazon.it — search results for "insinkerator tritarifiuti".
@@ -692,6 +906,11 @@ SCRAPERS = [
     scrape_leroymerlin,
     scrape_bricobravo,
     scrape_plumbingshop,
+    scrape_lineadaincasso,
+    scrape_opportunitycommerce,
+    scrape_climaconvenienza,
+    scrape_vieffetrade,
+    scrape_yeppon,
     scrape_amazon,
 ]
 
