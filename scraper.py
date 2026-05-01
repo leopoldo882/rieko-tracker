@@ -1,8 +1,8 @@
 """
 InSinkErator Italy Price Tracker
 Scrapes prices from unieuro.it, eprice.it, mediaworld.it, trovaincasso.it,
-pentoleprofessionali.it, leroymerlin.it, and amazon.it, then saves results
-to CSV and Google Sheets.
+pentoleprofessionali.it, leroymerlin.it, bricobravo.com, plumbingshop.it,
+and amazon.it, then saves results to CSV and Google Sheets.
 """
 
 import csv
@@ -364,14 +364,183 @@ def scrape_pentoleprofessionali() -> list[dict]:
 
 def scrape_leroymerlin() -> list[dict]:
     """
-    leroymerlin.it — blocked by DataDome JS challenge; not scrapable without a
-    headless browser. Returns empty and logs a warning.
+    leroymerlin.it — search for "insinkerator".
+    The site is protected by DataDome; static requests typically receive a 403.
+    Attempts the scrape anyway and returns results if DataDome lets the request
+    through; logs a warning otherwise.
+    Cards: [data-test='product-cell']  Name: [data-test='product-cell-title']
+    Price: [data-test='product-cell-price'], .product-cell__price, or .price--final
+    URL: a[data-test='product-cell-link']
     """
-    log.warning(
-        "leroymerlin.it uses DataDome bot protection (JS challenge). "
-        "Skipping — a headless browser (e.g. Playwright) is required."
-    )
-    return []
+    site = "leroymerlin.it"
+    url = "https://www.leroymerlin.it/ricerca?q=insinkerator"
+    log.info("Scraping %s …", site)
+
+    session = _make_session()
+    session.headers.update({
+        "Referer": "https://www.google.it/",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "cross-site",
+    })
+
+    resp = get(url, session=session)
+    if resp is None:
+        log.warning(
+            "leroymerlin.it blocked the request (DataDome). "
+            "A headless browser (e.g. Playwright) is required."
+        )
+        return []
+
+    if resp.status_code == 403 or "datadome" in resp.headers.get("server", "").lower():
+        log.warning(
+            "leroymerlin.it: DataDome challenge page returned. "
+            "A headless browser is required for this site."
+        )
+        return []
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+    results = []
+
+    for card in soup.select(
+        "[data-test='product-cell'], .product-cell, "
+        "[class*='ProductCard'], [class*='product-card']"
+    ):
+        name_tag = card.select_one(
+            "[data-test='product-cell-title'], .product-cell__title, "
+            "[class*='product-title'], h2, h3"
+        )
+        price_tag = card.select_one(
+            "[data-test='product-cell-price'], .product-cell__price, "
+            ".price--final, [class*='price']"
+        )
+        link_tag = card.select_one(
+            "a[data-test='product-cell-link'], a[href*='/p/'], a[href]"
+        )
+
+        if not (name_tag and price_tag):
+            continue
+
+        product_url = link_tag["href"] if link_tag and link_tag.get("href") else url
+        if product_url.startswith("/"):
+            product_url = "https://www.leroymerlin.it" + product_url
+
+        row = make_row(site, name_tag.get_text(), price_tag.get_text(), product_url)
+        if row:
+            results.append(row)
+
+    if not results:
+        log.warning(
+            "leroymerlin.it returned 0 products — likely blocked by DataDome. "
+            "A headless browser (e.g. Playwright) is required."
+        )
+    log.info("  → %d products found", len(results))
+    return results
+
+
+def scrape_bricobravo() -> list[dict]:
+    """
+    bricobravo.com — Shopify-based store; search for "insinkerator".
+    (bricobravo.it redirects to a WordPress blog — the shop is at bricobravo.com)
+    Cards: .product-card  Name: .product-card__title a span
+    Price: .f-price-item--sale (on-sale items) / .f-price-item--regular (otherwise)
+    URL: .product-card__title a[href]
+    """
+    site = "bricobravo.com"
+    url = "https://www.bricobravo.com/search?q=insinkerator"
+    log.info("Scraping %s …", site)
+
+    resp = get(url)
+    if resp is None:
+        return []
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+    results = []
+
+    for card in soup.select(".product-card"):
+        name_tag = card.select_one(".product-card__title a span, .product-card__title a")
+        # Prefer the sale price when a discount is active, else use the regular price
+        price_tag = (
+            card.select_one(".f-price__sale .f-price-item--sale")
+            or card.select_one(".f-price-item--regular")
+        )
+        link_tag = card.select_one(".product-card__title a[href]")
+
+        if not (name_tag and price_tag):
+            continue
+
+        # Skip cards whose sale price element is empty (sometimes rendered but blank)
+        price_text = price_tag.get_text(strip=True)
+        if not price_text:
+            alt = card.select_one(".f-price-item--regular")
+            if alt:
+                price_tag = alt
+                price_text = alt.get_text(strip=True)
+        if not price_text:
+            continue
+
+        product_url = link_tag["href"] if link_tag and link_tag.get("href") else url
+        if product_url.startswith("/"):
+            product_url = "https://www.bricobravo.com" + product_url
+        # Strip Shopify tracking params (_pos, _sid, _ss) for a clean URL
+        product_url = product_url.split("?")[0]
+
+        row = make_row(site, name_tag.get_text(), price_text, product_url)
+        if row:
+            results.append(row)
+
+    log.info("  → %d products found", len(results))
+    return results
+
+
+def scrape_plumbingshop() -> list[dict]:
+    """
+    plumbingshop.it — Magento-style store; search for "insinkerator".
+    NOTE: as of 2026-05, the domain returns NXDOMAIN (DNS not found).
+    The scraper is included so it activates automatically if the site comes back.
+    Cards: li.product-item, .product-item  Name: .product-item-link, a.product-item-link
+    Price: span.price, [data-price-type='finalPrice']
+    URL: a.product-item-link[href]
+    """
+    site = "plumbingshop.it"
+    url = "https://www.plumbingshop.it/catalogsearch/result/?q=insinkerator"
+    log.info("Scraping %s …", site)
+
+    resp = get(url)
+    if resp is None:
+        log.warning(
+            "plumbingshop.it is unreachable (NXDOMAIN as of 2026-05). "
+            "The domain may be down or renamed."
+        )
+        return []
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+    results = []
+
+    for card in soup.select("li.product-item, .product-item"):
+        name_tag = card.select_one(
+            "a.product-item-link, .product-item-link, "
+            "[class*='product-name'] a, h2 a, h3 a"
+        )
+        price_tag = card.select_one(
+            "[data-price-type='finalPrice'], span.price, "
+            ".price-box .price, [class*='price'] span"
+        )
+        link_tag = card.select_one("a.product-item-link, a[href]")
+
+        if not (name_tag and price_tag):
+            continue
+
+        product_url = link_tag["href"] if link_tag and link_tag.get("href") else url
+        if product_url.startswith("/"):
+            product_url = "https://www.plumbingshop.it" + product_url
+
+        row = make_row(site, name_tag.get_text(), price_tag.get_text(), product_url)
+        if row:
+            results.append(row)
+
+    log.info("  → %d products found", len(results))
+    return results
 
 
 def scrape_amazon() -> list[dict]:
@@ -521,6 +690,8 @@ SCRAPERS = [
     scrape_trovaincasso,
     scrape_pentoleprofessionali,
     scrape_leroymerlin,
+    scrape_bricobravo,
+    scrape_plumbingshop,
     scrape_amazon,
 ]
 
