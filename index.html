@@ -27,6 +27,9 @@
       --c-pentoleprofessionali: #7c3aed;
       --c-leroymerlin:          #15803d;
       --c-bricobravo:           #0ea5e9;
+      --c-lineadaincasso:       #0891b2;
+      --c-opportunitycommerce:  #059669;
+      --c-climaconvenienza:     #d946ef;
       --c-default:              #64748b;
     }
 
@@ -283,6 +286,25 @@
       border-radius: 4px;
       flex-shrink: 0;
     }
+    .esaurito-badge {
+      background: #fef2f2;
+      color: var(--red);
+      border: 1px solid #fecdd3;
+      font-size: .6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      padding: 2px 6px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .price-row.out-of-stock {
+      opacity: .45;
+    }
+    .price-row.out-of-stock .price-num {
+      text-decoration: line-through;
+      color: var(--ink-3);
+    }
     .link-btn {
       display: flex;
       align-items: center;
@@ -312,6 +334,12 @@
     .bar-leroymerlin          { background: var(--c-leroymerlin); }
     .pip-bricobravo           { background: var(--c-bricobravo); }
     .bar-bricobravo           { background: var(--c-bricobravo); }
+    .pip-lineadaincasso       { background: var(--c-lineadaincasso); }
+    .bar-lineadaincasso       { background: var(--c-lineadaincasso); }
+    .pip-opportunitycommerce  { background: var(--c-opportunitycommerce); }
+    .bar-opportunitycommerce  { background: var(--c-opportunitycommerce); }
+    .pip-climaconvenienza     { background: var(--c-climaconvenienza); }
+    .bar-climaconvenienza     { background: var(--c-climaconvenienza); }
     .pip-default              { background: var(--c-default); }
     .bar-default              { background: var(--c-default); }
 
@@ -454,6 +482,9 @@
     if (site.includes('pentole') || site.includes('professionali')) return 'pentoleprofessionali';
     if (site.includes('leroy'))                return 'leroymerlin';
     if (site.includes('bricobravo'))           return 'bricobravo';
+    if (site.includes('lineadaincasso'))       return 'lineadaincasso';
+    if (site.includes('opportunity'))          return 'opportunitycommerce';
+    if (site.includes('climaconvenienza'))     return 'climaconvenienza';
     return 'default';
   }
 
@@ -520,26 +551,37 @@
     const prices  = rows.map(r => r.price_eur);
     const minP    = Math.min(...prices);
     const maxP    = Math.max(...prices);
-    const avg     = prices.reduce((a, b) => a + b, 0) / prices.length;
+    // Exclude sold-out rows from the average so it reflects available prices
+    const availPrices = rows
+      .filter(r => (r.stock_status || 'unknown') !== 'out_of_stock')
+      .map(r => r.price_eur);
+    const avg = availPrices.length > 0
+      ? availPrices.reduce((a, b) => a + b, 0) / availPrices.length
+      : prices.reduce((a, b) => a + b, 0) / prices.length;
     const spec    = specForModel(model);
     const multi   = rows.length > 1;
 
     const rowsHtml = rows.map(r => {
-      const sk       = siteKey(r.site);
-      const isMin    = r.price_eur === minP;
-      const barWidth = maxP > 0 ? Math.round((r.price_eur / maxP) * 100) : 100;
-      const cheapTag = (multi && isMin)
+      const sk         = siteKey(r.site);
+      const isMin      = r.price_eur === minP;
+      const barWidth   = maxP > 0 ? Math.round((r.price_eur / maxP) * 100) : 100;
+      const isOos      = (r.stock_status || 'unknown') === 'out_of_stock';
+      const cheapTag   = (multi && isMin && !isOos)
         ? `<span class="cheap-tag">cheapest</span>`
         : '';
+      const esauritoTag = isOos
+        ? `<span class="esaurito-badge">ESAURITO</span>`
+        : '';
+      const oosClass   = isOos ? ' out-of-stock' : '';
 
-      return `<div class="price-row">
+      return `<div class="price-row${oosClass}">
         <span class="site-pip pip-${sk}"></span>
         <span class="site-label" title="${r.site}">${r.site}</span>
         <div class="bar-track">
           <div class="bar-fill bar-${sk}" style="width:${barWidth}%"></div>
         </div>
         <span class="price-num">${fmtEur(r.price_eur)}</span>
-        ${cheapTag}
+        ${cheapTag}${esauritoTag}
         <a class="link-btn" href="${r.url}" target="_blank" rel="noopener"
            title="View on ${r.site}">${svgExternal()}</a>
       </div>`;
@@ -618,7 +660,7 @@
     skipEmptyLines:  true,
     complete(results) {
       const rows = results.data
-        .map(r => ({ ...r, price_eur: parseFloat(r.price_eur) }))
+        .map(r => ({ ...r, price_eur: parseFloat(r.price_eur), stock_status: r.stock_status || 'unknown' }))
         .filter(r => !isNaN(r.price_eur) && r.price_eur > 0);
       render(rows);
     },
