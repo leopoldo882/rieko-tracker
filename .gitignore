@@ -5,6 +5,8 @@ service_account.json
 !site_health.json
 !stock_state.json
 !stock_history.json
+!latest.json
+!price_history.json
 .env
 .venv/
 __pycache__/

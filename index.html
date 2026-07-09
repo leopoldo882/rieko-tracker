@@ -1,130 +1,140 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>InSinkErator Price Tracker — Italy</title>
+  <title>InSinkErator Price Tracker — Italia</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg:       #f0f2f5;
-      --card:     #ffffff;
-      --ink:      #0f172a;
-      --ink-2:    #475569;
-      --ink-3:    #94a3b8;
-      --border:   #e2e8f0;
-      --red:      #e11d48;
-      --green:    #16a34a;
-      --green-bg: #dcfce7;
-      --shadow:   0 1px 2px rgba(0,0,0,.05), 0 4px 16px rgba(0,0,0,.07);
+      /* chrome & ink (reference dataviz palette) */
+      --page:     #f9f9f7;
+      --surface:  #fcfcfb;
+      --ink:      #0b0b0b;
+      --ink-2:    #52514e;
+      --ink-3:    #898781;
+      --grid:     #e1e0d9;
+      --baseline: #c3c2b7;
+      --border:   rgba(11,11,11,.10);
+      --shadow:   0 1px 2px rgba(0,0,0,.04), 0 4px 14px rgba(0,0,0,.05);
       --radius:   12px;
 
-      /* site palette */
-      --c-trovaincasso:         #1d4ed8;
-      --c-amazon:               #d97706;
-      --c-trovaprezzi:          #dc2626;
-      --c-pentoleprofessionali: #7c3aed;
-      --c-leroymerlin:          #15803d;
-      --c-bricobravo:           #0ea5e9;
-      --c-lineadaincasso:       #0891b2;
-      --c-opportunitycommerce:  #059669;
-      --c-climaconvenienza:     #d946ef;
-      --c-default:              #64748b;
+      /* status (fixed, never themed) */
+      --good:        #0ca30c;
+      --good-text:   #006300;
+      --warning:     #fab219;
+      --critical:    #d03b3b;
+      --good-bg:     rgba(12,163,12,.10);
+      --critical-bg: rgba(208,59,59,.09);
+
+      /* price-trend accent (sequential blue, step 500) */
+      --trend:      #256abf;
+      --trend-wash: rgba(37,106,191,.10);
+
+      /* categorical site slots — fixed order, never cycled */
+      --s1: #2a78d6;  /* amazon.it */
+      --s2: #1baf7a;  /* vieffetrade.com */
+      --s3: #eda100;  /* lineadaincasso.it */
+      --s4: #008300;  /* opportunitycommerce.com */
+      --s5: #4a3aa7;  /* climaconvenienza.it */
+      --s6: #e34948;  /* caldaiemurali.it */
+      --s7: #e87ba4;  /* yeppon.it */
+      --s8: #eb6834;  /* pentoleprofessionali.it */
+      --s0: #898781;  /* every further site: neutral (name is always printed) */
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --page:     #0d0d0d;
+        --surface:  #1a1a19;
+        --ink:      #ffffff;
+        --ink-2:    #c3c2b7;
+        --ink-3:    #898781;
+        --grid:     #2c2c2a;
+        --baseline: #383835;
+        --border:   rgba(255,255,255,.10);
+        --shadow:   none;
+
+        --good-text:   #0ca30c;
+        --good-bg:     rgba(12,163,12,.16);
+        --critical-bg: rgba(208,59,59,.16);
+
+        --trend:      #3987e5;
+        --trend-wash: rgba(57,135,229,.14);
+
+        --s1: #3987e5;
+        --s2: #199e70;
+        --s3: #c98500;
+        --s4: #008300;
+        --s5: #9085e9;
+        --s6: #e66767;
+        --s7: #d55181;
+        --s8: #d95926;
+        --s0: #898781;
+      }
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background: var(--bg);
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      background: var(--page);
       color: var(--ink);
       min-height: 100vh;
       -webkit-font-smoothing: antialiased;
     }
+    a { color: inherit; }
 
     /* ── HEADER ──────────────────────────────────────────────────────────── */
     header {
-      background: var(--ink);
+      background: #0b0b0b;
       color: #fff;
       padding: 0 32px;
       display: flex;
       align-items: center;
       gap: 20px;
-      height: 64px;
+      min-height: 64px;
       flex-wrap: wrap;
       position: sticky;
       top: 0;
-      z-index: 10;
-      border-bottom: 1px solid rgba(255,255,255,.06);
+      z-index: 30;
+      border-bottom: 1px solid rgba(255,255,255,.08);
     }
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+    .brand { display: flex; align-items: center; gap: 11px; padding: 10px 0; }
     .brand-dot {
       width: 10px; height: 10px;
-      background: var(--red);
+      background: var(--critical);
       border-radius: 50%;
-      box-shadow: 0 0 0 3px rgba(225,29,72,.25);
+      box-shadow: 0 0 0 3px rgba(208,59,59,.28);
     }
-    .brand-name {
-      font-size: .9rem;
-      font-weight: 700;
-      letter-spacing: -.02em;
-      color: #fff;
-    }
-    .brand-sub {
-      font-size: .75rem;
-      color: var(--ink-3);
-      margin-left: 2px;
-    }
-    .header-right {
-      margin-left: auto;
-      display: flex;
-      align-items: center;
-      gap: 24px;
-    }
-    .stat-chip {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-    }
-    .stat-chip .label { font-size: .65rem; color: #64748b; text-transform: uppercase; letter-spacing: .07em; }
-    .stat-chip .value { font-size: .82rem; font-weight: 600; color: #e2e8f0; }
+    .brand-name { font-size: .92rem; font-weight: 700; letter-spacing: -.02em; }
+    .brand-name span { opacity: .5; font-weight: 500; }
+    .brand-sub { font-size: .72rem; color: #898781; margin-top: 1px; }
+    .header-right { margin-left: auto; display: flex; align-items: center; gap: 26px; padding: 10px 0; }
+    .stat-chip { display: flex; flex-direction: column; align-items: flex-end; }
+    .stat-chip .label { font-size: .62rem; color: #898781; text-transform: uppercase; letter-spacing: .08em; }
+    .stat-chip .value { font-size: .84rem; font-weight: 600; color: #f0efec; }
 
-    /* ── MAIN ────────────────────────────────────────────────────────────── */
-    main {
-      max-width: 1140px;
-      margin: 0 auto;
-      padding: 32px 24px 48px;
-    }
+    main { max-width: 1180px; margin: 0 auto; padding: 28px 24px 48px; }
 
-    /* ── LOADING / ERROR ─────────────────────────────────────────────────── */
+    /* ── STATUS / ERROR ──────────────────────────────────────────────────── */
     #status {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 14px;
-      padding: 80px 24px;
-      color: var(--ink-2);
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 14px; padding: 80px 24px; color: var(--ink-2);
     }
     #status p { font-size: .9rem; }
     .spinner {
       width: 30px; height: 30px;
-      border: 3px solid var(--border);
-      border-top-color: var(--red);
+      border: 3px solid var(--grid);
+      border-top-color: var(--critical);
       border-radius: 50%;
       animation: spin .75s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-
     .error-box {
-      background: #fff1f2;
-      border: 1px solid #fecdd3;
-      color: #9f1239;
+      background: var(--critical-bg);
+      border: 1px solid var(--critical);
+      color: var(--ink);
       border-radius: 8px;
       padding: 14px 18px;
       font-size: .85rem;
@@ -133,334 +143,217 @@
       line-height: 1.55;
     }
     .error-box code {
-      background: rgba(159,18,57,.1);
-      border-radius: 3px;
-      padding: 1px 5px;
-      font-size: .82rem;
-      font-family: ui-monospace, monospace;
+      background: rgba(128,128,128,.15);
+      border-radius: 3px; padding: 1px 5px;
+      font-size: .82rem; font-family: ui-monospace, monospace;
     }
 
-    /* ── LEGEND ──────────────────────────────────────────────────────────── */
-    .legend {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px 20px;
-      margin-bottom: 28px;
-      align-items: center;
+    /* ── TOOLBAR: health + legend + range filter ─────────────────────────── */
+    .toolbar {
+      display: flex; flex-wrap: wrap; gap: 10px 16px;
+      align-items: center; margin-bottom: 22px;
     }
+    .range-picker {
+      display: inline-flex; gap: 0; border: 1px solid var(--border);
+      border-radius: 8px; overflow: hidden; background: var(--surface);
+    }
+    .range-picker button {
+      border: 0; background: transparent; color: var(--ink-2);
+      font: inherit; font-size: .74rem; font-weight: 600;
+      padding: 6px 13px; cursor: pointer;
+    }
+    .range-picker button + button { border-left: 1px solid var(--border); }
+    .range-picker button.active { background: var(--ink); color: var(--page); }
+    .toolbar-note { font-size: .72rem; color: var(--ink-3); }
+
+    .health-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 13px 16px;
+      margin-bottom: 18px;
+    }
+    .panel-title {
+      font-size: .68rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .07em; color: var(--ink-3); margin-bottom: 9px;
+    }
+    .health-grid { display: flex; flex-wrap: wrap; gap: 6px 8px; }
+    .health-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: .72rem; color: var(--ink-2);
+      background: var(--page); border: 1px solid var(--border);
+      border-radius: 999px; padding: 3px 10px; white-space: nowrap;
+    }
+    .health-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .health-dot.ok      { background: var(--good); }
+    .health-dot.warn    { background: var(--warning); }
+    .health-dot.bad     { background: var(--critical); }
+    .health-dot.neutral { background: var(--ink-3); }
+    .health-chip .meta  { color: var(--ink-3); }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 7px 16px; align-items: center; margin-bottom: 24px; }
     .legend-label {
-      font-size: .7rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .07em;
-      color: var(--ink-3);
-      margin-right: 4px;
+      font-size: .68rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .07em; color: var(--ink-3); margin-right: 2px;
     }
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: .78rem;
-      color: var(--ink-2);
-    }
-    .legend-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: .76rem; color: var(--ink-2); }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
-    /* ── CARDS GRID ──────────────────────────────────────────────────────── */
+    /* ── SECTIONS ────────────────────────────────────────────────────────── */
+    .section { margin-bottom: 36px; }
+    .section-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; }
+    .section-title { font-size: 1.05rem; font-weight: 800; letter-spacing: -.02em; }
+    .section-sub { font-size: .74rem; color: var(--ink-3); }
+
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(490px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
       gap: 18px;
     }
 
     /* ── CARD ────────────────────────────────────────────────────────────── */
     .card {
-      background: var(--card);
+      background: var(--surface);
       border-radius: var(--radius);
       border: 1px solid var(--border);
       box-shadow: var(--shadow);
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
     .card-head {
-      padding: 18px 22px 14px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 12px;
+      padding: 16px 20px 13px;
+      border-bottom: 1px solid var(--grid);
+      display: flex; align-items: flex-start;
+      justify-content: space-between; gap: 12px;
     }
-    .model-name {
-      font-size: .95rem;
-      font-weight: 700;
-      color: var(--ink);
-      letter-spacing: -.01em;
+    .model-name { font-size: .98rem; font-weight: 700; letter-spacing: -.01em; }
+    .model-spec { font-size: .72rem; color: var(--ink-3); margin-top: 3px; font-weight: 500; }
+    .model-meta { font-size: .68rem; color: var(--ink-3); margin-top: 5px; }
+    .best-pill {
+      flex-shrink: 0; text-align: right;
+      background: var(--page); border: 1px solid var(--border);
+      border-radius: 9px; padding: 7px 12px;
     }
-    .model-spec {
-      font-size: .72rem;
-      color: var(--ink-3);
-      margin-top: 3px;
-      font-weight: 500;
+    .best-pill .lbl {
+      font-size: .58rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .08em; color: var(--ink-3);
     }
-    .avg-pill {
-      flex-shrink: 0;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 6px 12px;
-      text-align: right;
-    }
-    .avg-pill .avg-lbl {
-      font-size: .6rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      color: var(--ink-3);
-    }
-    .avg-pill .avg-val {
-      font-size: .95rem;
-      font-weight: 700;
-      color: var(--ink);
-      white-space: nowrap;
+    .best-pill .val { font-size: 1.02rem; font-weight: 700; white-space: nowrap; }
+    .best-pill .sub { font-size: .64rem; color: var(--ink-3); white-space: nowrap; }
+    .best-pill.all-out .val { color: var(--critical); font-size: .84rem; }
+
+    .card-body { padding: 10px 20px 16px; flex: 1; }
+
+    .allout-banner {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--critical-bg); border: 1px solid var(--critical);
+      color: var(--ink); border-radius: 8px;
+      font-size: .76rem; font-weight: 600;
+      padding: 7px 11px; margin: 4px 0 8px;
     }
 
-    .card-body { padding: 12px 22px 18px; }
-
-    /* ── PRICE ROW ───────────────────────────────────────────────────────── */
-    .price-row {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      padding: 7px 0;
-    }
-    .price-row + .price-row {
-      border-top: 1px solid #f8fafc;
-    }
-    .site-pip {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
+    /* price rows */
+    .price-row { display: flex; align-items: center; gap: 9px; padding: 6px 0; }
+    .price-row + .price-row { border-top: 1px solid var(--grid); }
+    .site-pip { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
     .site-label {
-      font-size: .75rem;
-      color: var(--ink-2);
-      width: 148px;
-      flex-shrink: 0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      font-weight: 500;
+      font-size: .75rem; color: var(--ink-2); width: 152px; flex-shrink: 0;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500;
     }
-    .bar-track {
-      flex: 1;
-      height: 6px;
-      background: var(--bg);
-      border-radius: 999px;
-      overflow: hidden;
-    }
-    .bar-fill {
-      height: 100%;
-      border-radius: 999px;
-      transition: width .5s cubic-bezier(.4,0,.2,1);
-      min-width: 4px;
-    }
+    .bar-track { flex: 1; height: 8px; background: var(--page); border-radius: 4px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 0 4px 4px 0; min-width: 4px; transition: width .5s cubic-bezier(.4,0,.2,1); }
     .price-num {
-      font-size: .82rem;
-      font-weight: 600;
-      color: var(--ink);
-      width: 66px;
-      text-align: right;
-      flex-shrink: 0;
-      font-variant-numeric: tabular-nums;
+      font-size: .82rem; font-weight: 600; width: 74px; text-align: right;
+      flex-shrink: 0; font-variant-numeric: tabular-nums;
     }
-    .cheap-tag {
-      background: var(--green-bg);
-      color: var(--green);
-      font-size: .6rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .06em;
-      padding: 2px 6px;
-      border-radius: 4px;
-      flex-shrink: 0;
+    .tag {
+      font-size: .58rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .06em; padding: 2px 6px; border-radius: 4px; flex-shrink: 0;
+      display: inline-flex; align-items: center; gap: 3px;
     }
-    .esaurito-badge {
-      background: #fef2f2;
-      color: var(--red);
-      border: 1px solid #fecdd3;
-      font-size: .6rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .06em;
-      padding: 2px 6px;
-      border-radius: 4px;
-      flex-shrink: 0;
-    }
-    .price-row.out-of-stock {
-      opacity: .45;
-    }
-    .price-row.out-of-stock .price-num {
-      text-decoration: line-through;
-      color: var(--ink-3);
-    }
+    .tag-best { background: var(--good-bg); color: var(--good-text); }
+    .tag-out  { background: var(--critical-bg); color: var(--critical); }
+    .price-row.out-of-stock .site-label, .price-row.out-of-stock .price-num { opacity: .55; }
+    .price-row.out-of-stock .price-num { text-decoration: line-through; }
+    .price-row.out-of-stock .bar-fill { opacity: .3; }
     .link-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 22px; height: 22px;
-      border-radius: 5px;
-      color: var(--ink-3);
-      text-decoration: none;
-      transition: background .15s, color .15s;
-      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; border-radius: 5px; color: var(--ink-3);
+      text-decoration: none; transition: background .15s, color .15s; flex-shrink: 0;
     }
-    .link-btn:hover {
-      background: var(--bg);
-      color: var(--ink);
-    }
+    .link-btn:hover { background: var(--page); color: var(--ink); }
 
-    /* ── SITE COLORS ─────────────────────────────────────────────────────── */
-    .pip-trovaincasso         { background: var(--c-trovaincasso); }
-    .bar-trovaincasso         { background: var(--c-trovaincasso); }
-    .pip-amazon               { background: var(--c-amazon); }
-    .bar-amazon               { background: var(--c-amazon); }
-    .pip-trovaprezzi          { background: var(--c-trovaprezzi); }
-    .bar-trovaprezzi          { background: var(--c-trovaprezzi); }
-    .pip-pentoleprofessionali { background: var(--c-pentoleprofessionali); }
-    .bar-pentoleprofessionali { background: var(--c-pentoleprofessionali); }
-    .pip-leroymerlin          { background: var(--c-leroymerlin); }
-    .bar-leroymerlin          { background: var(--c-leroymerlin); }
-    .pip-bricobravo           { background: var(--c-bricobravo); }
-    .bar-bricobravo           { background: var(--c-bricobravo); }
-    .pip-lineadaincasso       { background: var(--c-lineadaincasso); }
-    .bar-lineadaincasso       { background: var(--c-lineadaincasso); }
-    .pip-opportunitycommerce  { background: var(--c-opportunitycommerce); }
-    .bar-opportunitycommerce  { background: var(--c-opportunitycommerce); }
-    .pip-climaconvenienza     { background: var(--c-climaconvenienza); }
-    .bar-climaconvenienza     { background: var(--c-climaconvenienza); }
-    .pip-default              { background: var(--c-default); }
-    .bar-default              { background: var(--c-default); }
+    /* site colors */
+    .c1 { background: var(--s1); } .c2 { background: var(--s2); }
+    .c3 { background: var(--s3); } .c4 { background: var(--s4); }
+    .c5 { background: var(--s5); } .c6 { background: var(--s6); }
+    .c7 { background: var(--s7); } .c8 { background: var(--s8); }
+    .c0 { background: var(--s0); }
 
-    /* ── DATA HEALTH PANEL ───────────────────────────────────────────────── */
-    .health-panel {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 14px 18px;
-      margin-bottom: 24px;
+    /* ── SPARKLINE ───────────────────────────────────────────────────────── */
+    .spark-wrap { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--grid); }
+    .spark-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px; }
+    .spark-title {
+      font-size: .62rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .07em; color: var(--ink-3);
     }
-    .health-title {
-      font-size: .7rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .07em;
-      color: var(--ink-3);
-      margin-bottom: 10px;
+    .spark-range { font-size: .66rem; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+    .spark-box { position: relative; }
+    .spark-box svg { display: block; width: 100%; height: 74px; }
+    .spark-tip {
+      position: absolute; pointer-events: none; display: none;
+      background: var(--ink); color: var(--page);
+      border-radius: 6px; padding: 5px 9px;
+      font-size: .7rem; line-height: 1.45; white-space: nowrap;
+      transform: translate(-50%, -100%);
+      z-index: 5;
     }
-    .health-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px 10px;
-    }
-    .health-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: .72rem;
-      color: var(--ink-2);
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 3px 10px;
-      white-space: nowrap;
-    }
-    .health-dot {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-    .health-dot.ok      { background: var(--green); }
-    .health-dot.warn    { background: #d97706; }
-    .health-dot.bad     { background: var(--red); }
-    .health-dot.neutral { background: #94a3b8; }
-    .health-chip .meta  { color: var(--ink-3); }
+    .spark-tip .v { font-weight: 700; font-size: .78rem; }
 
     /* ── STOCK HISTORY ───────────────────────────────────────────────────── */
-    .stock-history {
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px dashed var(--border);
-    }
-    .stock-history-title {
-      font-size: .62rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .07em;
-      color: var(--ink-3);
-      margin-bottom: 6px;
-    }
-    .oos-alert {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      font-size: .76rem;
-      font-weight: 600;
-      color: var(--red);
-      background: #fff1f2;
-      border: 1px solid #fecdd3;
-      border-radius: 7px;
-      padding: 6px 10px;
-      margin-bottom: 6px;
-    }
-    .oos-alert .days {
-      margin-left: auto;
-      font-size: .68rem;
-      font-weight: 700;
-      background: rgba(225,29,72,.12);
-      border-radius: 4px;
-      padding: 1px 6px;
-      white-space: nowrap;
-    }
+    .stock-history { margin-top: 11px; padding-top: 9px; border-top: 1px dashed var(--grid); }
     .history-line {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      font-size: .7rem;
-      color: var(--ink-2);
-      padding: 2px 0;
+      display: flex; align-items: center; gap: 7px;
+      font-size: .71rem; color: var(--ink-2); padding: 2px 0;
     }
     .history-line .h-date {
-      color: var(--ink-3);
-      width: 52px;
-      flex-shrink: 0;
-      font-variant-numeric: tabular-nums;
+      color: var(--ink-3); width: 56px; flex-shrink: 0; font-variant-numeric: tabular-nums;
     }
-    .h-dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-    .h-dot.out { background: var(--red); }
-    .h-dot.in  { background: var(--green); }
+    .h-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .h-dot.out { background: var(--critical); }
+    .h-dot.in  { background: var(--good); }
+    .history-line strong { font-weight: 600; }
 
-    /* ── FOOTER ──────────────────────────────────────────────────────────── */
-    footer {
-      text-align: center;
-      padding: 24px 16px 32px;
-      font-size: .72rem;
-      color: var(--ink-3);
+    /* ── OTHER-PRODUCTS TABLE ────────────────────────────────────────────── */
+    .other-table-wrap {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow); overflow-x: auto;
     }
+    table.other { width: 100%; border-collapse: collapse; font-size: .78rem; }
+    table.other th {
+      text-align: left; font-size: .64rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .07em; color: var(--ink-3);
+      padding: 11px 16px 8px; border-bottom: 1px solid var(--grid);
+    }
+    table.other td { padding: 8px 16px; border-bottom: 1px solid var(--grid); color: var(--ink-2); }
+    table.other tr:last-child td { border-bottom: 0; }
+    table.other td.price { font-weight: 600; color: var(--ink); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    table.other td.name  { max-width: 520px; }
+    table.other .site-cell { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+
+    footer { text-align: center; padding: 24px 16px 32px; font-size: .72rem; color: var(--ink-3); }
     footer a { color: var(--ink-3); text-underline-offset: 3px; }
 
-    /* ── RESPONSIVE ──────────────────────────────────────────────────────── */
     @media (max-width: 640px) {
       header { padding: 0 16px; gap: 12px; }
       main   { padding: 20px 12px 40px; }
       .grid  { grid-template-columns: 1fr; }
-      .site-label { width: 100px; }
+      .site-label { width: 104px; }
+    }
+    @media (max-width: 560px) {
+      .grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -470,23 +363,15 @@
   <div class="brand">
     <div class="brand-dot"></div>
     <div>
-      <div class="brand-name">InSinkErator <span style="opacity:.45;font-weight:500">Price Tracker</span></div>
-      <div class="brand-sub">Italy · live from Google Sheets</div>
+      <div class="brand-name">InSinkErator <span>Price Tracker</span></div>
+      <div class="brand-sub">Italia · aggiornato ogni giorno</div>
     </div>
   </div>
   <div class="header-right">
-    <div class="stat-chip">
-      <span class="label">Models</span>
-      <span class="value" id="hdr-models">—</span>
-    </div>
-    <div class="stat-chip">
-      <span class="label">Sites</span>
-      <span class="value" id="hdr-sites">—</span>
-    </div>
-    <div class="stat-chip">
-      <span class="label">Updated</span>
-      <span class="value" id="hdr-date">—</span>
-    </div>
+    <div class="stat-chip"><span class="label">Modelli</span><span class="value" id="hdr-models">—</span></div>
+    <div class="stat-chip"><span class="label">Siti</span><span class="value" id="hdr-sites">—</span></div>
+    <div class="stat-chip"><span class="label">Offerte</span><span class="value" id="hdr-listings">—</span></div>
+    <div class="stat-chip"><span class="label">Aggiornato</span><span class="value" id="hdr-date">—</span></div>
   </div>
 </header>
 
@@ -495,174 +380,374 @@
 
   <div id="status">
     <div class="spinner"></div>
-    <p>Fetching live prices…</p>
+    <p>Caricamento prezzi…</p>
   </div>
 
   <div id="content" style="display:none">
     <div class="health-panel" id="health-panel" style="display:none">
-      <div class="health-title">Data health — last successful update per site</div>
+      <div class="panel-title">Stato raccolta dati — ultimo aggiornamento riuscito per sito</div>
       <div class="health-grid" id="health-grid"></div>
     </div>
+
+    <div class="toolbar">
+      <div class="range-picker" id="range-picker" role="group" aria-label="Intervallo storico prezzi">
+        <button data-days="30">30 giorni</button>
+        <button data-days="90" class="active">90 giorni</button>
+        <button data-days="0">Tutto</button>
+      </div>
+      <span class="toolbar-note">L'intervallo si applica ai grafici di andamento prezzo</span>
+    </div>
+
     <div class="legend" id="legend"></div>
-    <div class="grid" id="grid"></div>
+
+    <div id="sections"></div>
   </div>
 </main>
 
 <footer>
-  Data scraped daily from <span id="footer-sites"></span>
+  Dati raccolti ogni giorno alle 07:00 UTC da <span id="footer-sites"></span>
 </footer>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"
-        integrity="sha512-dfX5uYVXzyU8+KHqj8bjo7UkOdg18PaOtpa48djpNbZHwExddghZ+ZmzWT06R5v6NSk3ZUfsH6FNEDepLx9hPQ=="
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
 <script>
-  const CSV_URL = 'https://docs.google.com/spreadsheets/d/16heQiZCaNRaAGNjmPTRbf2AxnO5NyxTlZPHMR6oJki0/gviz/tq?tqx=out:csv&sheet=Latest';
+  /* ─────────────────────────────────────────────────────────────────────────
+     Data comes exclusively from repo-relative JSON written by scraper.py:
+       latest.json         today's rows, each with canonical model/category
+       price_history.json  per model → per site → [[date, min price], …]
+       stock_history.json  in/out-of-stock transitions (with model field)
+       site_health.json    per-site scrape health
+     Model canonicalization lives in Python — this file only renders.
+  ──────────────────────────────────────────────────────────────────────── */
 
-  /* ── Model definitions ─────────────────────────────────────────────────
-     Order matters: first matching rule wins.  More specific rules come first.
-  ─────────────────────────────────────────────────────────────────────── */
-  const MODEL_RULES = [
-    {
-      key:  'LC-50 Professional',
-      spec: 'Commercial · multi-phase',
-      test: n => n.includes('lc-50') || n.includes('lc 50') || /lc\s*50/.test(n),
-    },
-    {
-      key:  'Evolution Plus 1000 EC',
-      spec: '1.00 HP · 4-phase · EC induction motor',
-      test: n => n.includes('1000'),
-    },
-    {
-      key:  'PRO750',
-      spec: '0.75 HP · Pro Series',
-      test: n => n.includes('pro750') || (n.includes('pro') && n.includes('series') && n.includes('750')),
-    },
-    {
-      key:  'Evolution Plus 750 EC',
-      spec: '0.75 HP · 3-phase · EC induction motor',
-      test: n => n.includes('750'),
-    },
-    {
-      key:  'Premium 700 EC',
-      spec: '0.75 HP · 2-phase · EC induction motor',
-      test: n => n.includes('700'),
-    },
-    {
-      key:  'Premium 550 SR',
-      spec: '0.50–0.55 HP · SR motor',
-      test: n => n.includes('550') && n.includes('sr'),
-    },
-    {
-      key:  'Premium 550 EC',
-      spec: '0.50–0.55 HP · EC induction motor',
-      test: n => n.includes('550'),
-    },
-    {
-      key:  'Standard 460',
-      spec: 'Entry-level continuous feed',
-      test: n => n.includes('460'),
-    },
-    {
-      key:  'Badger 500',
-      spec: '0.50 HP · continuous feed',
-      test: n => n.includes('badger'),
-    },
-  ];
+  const CATEGORY_META = {
+    disposer: { title: 'Dissipatori di rifiuti alimentari', sub: 'ordinati per diffusione — dal più venduto sul mercato italiano' },
+    tap:      { title: 'Erogatori di acqua bollente e accessori idraulici', sub: 'rubinetti istantanei, kit con NeoTank' },
+    other:    { title: 'Altri prodotti InSinkErator', sub: 'articoli visti sui siti monitorati ma non riconducibili a un modello noto' },
+  };
+  const CATEGORY_ORDER = ['disposer', 'tap'];
 
-  /* keywords that flag a row as an accessory / non-disposal product */
-  const SKIP_WORDS = [
-    'tappo','kit raccordo','kit colleg','blancocare','collarino',
-    'flangia','adattatore','guarnizione','stopper','copertura antispruzzo',
-    'pulsante','pezzo di','stazionario','cca-00','ledefense','led flang',
-    'gomma per','deflettore','paraspruzz','splash','setaccio',
-    'waste stopper','disposal stopper','ricambio','filtro','coperchio',
-    'accessori','seal','1975',
-  ];
+  /* Fixed categorical slot per site (never cycled; extra sites → neutral c0).
+     Every pip sits beside the printed site name, so identity never relies on
+     color alone. */
+  const SITE_SLOTS = {
+    'amazon.it': 'c1',
+    'vieffetrade.com': 'c2',
+    'lineadaincasso.it': 'c3',
+    'opportunitycommerce.com': 'c4',
+    'climaconvenienza.it': 'c5',
+    'caldaiemurali.it': 'c6',
+    'yeppon.it': 'c7',
+    'pentoleprofessionali.it': 'c8',
+  };
+  const siteClass = site => SITE_SLOTS[site] || 'c0';
 
-  /* ── Helpers ────────────────────────────────────────────────────────── */
-
-  function siteKey(site) {
-    if (site.includes('trovaincasso'))         return 'trovaincasso';
-    if (site.includes('amazon'))               return 'amazon';
-    if (site.includes('trovaprezzi'))          return 'trovaprezzi';
-    if (site.includes('pentole') || site.includes('professionali')) return 'pentoleprofessionali';
-    if (site.includes('leroy'))                return 'leroymerlin';
-    if (site.includes('bricobravo'))           return 'bricobravo';
-    if (site.includes('lineadaincasso'))       return 'lineadaincasso';
-    if (site.includes('opportunity'))          return 'opportunitycommerce';
-    if (site.includes('climaconvenienza'))     return 'climaconvenienza';
-    return 'default';
+  /* ── helpers ── */
+  const esc = s => String(s ?? '').replace(/[&<>"']/g,
+    c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const fmtEur = v => '€ ' + v.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtEur0 = v => '€ ' + Math.round(v).toLocaleString('it-IT');
+  const fmtDay = iso => {
+    const d = new Date(iso);
+    return isNaN(d) ? '' : d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
+  };
+  const daysSince = iso => {
+    const ms = Date.now() - new Date(iso).getTime();
+    return isNaN(ms) ? null : Math.max(0, Math.floor(ms / 86400000));
+  };
+  function relTime(iso) {
+    if (!iso) return 'mai';
+    const ms = Date.now() - new Date(iso).getTime();
+    if (isNaN(ms)) return '?';
+    const mins = Math.round(ms / 60000);
+    if (mins < 60) return mins + ' min fa';
+    const hrs = Math.round(mins / 60);
+    if (hrs < 48) return hrs + ' h fa';
+    return Math.round(hrs / 24) + ' g fa';
   }
-
-  /* words that identify a real disposal — names like "dissipatore ecologico
-     con tappo salvaposate" are disposals BUNDLED with accessories, and must
-     not be skipped just because an accessory word appears */
-  const DISPOSAL_RE = /dissipatore|tritarifiuti|disposer|evolution|badger|lc[\s-]?50/;
-  const ACCESSORY_PRICE_CEILING = 150;
-
-  function canonicalModel(rawName, price) {
-    const n = rawName.toLowerCase();
-    /* must be InSinkErator-branded */
-    if (!n.includes('insinkerator') && !n.includes('insinkeratore')) return null;
-    /* skip accessories — unless the name is a disposal bundle priced like one */
-    if (SKIP_WORDS.some(w => n.includes(w))) {
-      const isBundle = DISPOSAL_RE.test(n) &&
-        (price === undefined || price >= ACCESSORY_PRICE_CEILING);
-      if (!isBundle) return null;
-    }
-
-    for (const rule of MODEL_RULES) {
-      if (rule.test(n)) return rule.key;
-    }
-    return null;
-  }
-
-  function specForModel(key) {
-    const r = MODEL_RULES.find(m => m.key === key);
-    return r ? r.spec : '';
-  }
-
-  function fmtEur(v) {
-    return '€ ' + v.toFixed(2).replace('.', ',');
-  }
-
-  function svgExternal() {
-    return `<svg width="12" height="12" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+  const svgExternal = () => `<svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-      <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
-    </svg>`;
-  }
+      <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`;
 
-  /* ── Grouping ───────────────────────────────────────────────────────── */
+  /* ── state ── */
+  let LATEST = null;        /* latest.json payload */
+  let HISTORY = {};         /* price_history.json */
+  let STOCK = [];           /* stock_history.json records */
+  let RANGE_DAYS = 90;      /* sparkline window (0 = all) */
 
+  /* ── grouping ─────────────────────────────────────────────────────────── */
+
+  /* one entry per (model, site): prefer in-stock over out-of-stock, then cheapest */
   function groupRows(rows) {
-    const groups = {};
-
-    for (const row of rows) {
-      const model = canonicalModel(row.product_name, row.price_eur);
-      if (!model) continue;
-
-      if (!groups[model]) groups[model] = {};
-      const sk = siteKey(row.site);
-      const key = sk + '|' + row.site; /* group by exact site within sk */
-
-      /* keep cheapest entry per site */
-      if (!groups[model][key] || row.price_eur < groups[model][key].price_eur) {
-        groups[model][key] = row;
+    const models = {};   /* model → site → row */
+    const others = [];
+    for (const r of rows) {
+      if (!r.model) {
+        if (r.price_eur > 0) others.push(r);
+        continue;
+      }
+      const perSite = models[r.model] = models[r.model] || {};
+      const cur = perSite[r.site];
+      const curOut = cur && cur.stock_status === 'out_of_stock';
+      const newOut = r.stock_status === 'out_of_stock';
+      if (!cur || (curOut && !newOut) || (curOut === newOut && r.price_eur < cur.price_eur)) {
+        perSite[r.site] = r;
       }
     }
-
-    /* flatten each model's map to a sorted array */
-    const result = {};
-    for (const [model, siteMap] of Object.entries(groups)) {
-      result[model] = Object.values(siteMap).sort((a, b) => a.price_eur - b.price_eur);
-    }
-    return result;
+    return { models, others };
   }
 
-  /* ── Data health panel ──────────────────────────────────────────────── */
+  function modelCategory(model, rows) {
+    const r = rows.find(x => x.model === model);
+    return r ? r.category : 'other';
+  }
+
+  /* popularity: number of sites listing it, then listings, then lower price */
+  function sortModels(models, rows) {
+    return Object.keys(models).sort((a, b) => {
+      const sa = Object.keys(models[a]).length, sb = Object.keys(models[b]).length;
+      if (sb !== sa) return sb - sa;
+      const la = rows.filter(r => r.model === a).length, lb = rows.filter(r => r.model === b).length;
+      if (lb !== la) return lb - la;
+      const pa = Math.min(...Object.values(models[a]).map(r => r.price_eur));
+      const pb = Math.min(...Object.values(models[b]).map(r => r.price_eur));
+      return pa - pb;
+    });
+  }
+
+  /* ── stock history ────────────────────────────────────────────────────── */
+
+  function historyForModel(model) {
+    return STOCK
+      .filter(rec => rec.model === model)
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  }
+  function soldOutSince(records, site) {
+    const rec = records.find(r => r.site === site && r.new_status === 'out_of_stock');
+    return rec ? rec.timestamp : null;
+  }
+
+  function buildStockHistory(records) {
+    if (!records.length) return '';
+    const lines = records.slice(0, 5).map(rec => {
+      const out = rec.new_status === 'out_of_stock';
+      return `<div class="history-line">
+        <span class="h-date">${esc(fmtDay(rec.timestamp))}</span>
+        <span class="h-dot ${out ? 'out' : 'in'}"></span>
+        <span><strong>${esc(rec.site)}</strong> · ${out ? 'esaurito' : 'di nuovo disponibile'}</span>
+      </div>`;
+    }).join('');
+    return `<div class="stock-history">
+      <div class="panel-title" style="margin-bottom:5px">Storico disponibilità</div>${lines}
+    </div>`;
+  }
+
+  /* ── sparkline ────────────────────────────────────────────────────────── */
+
+  /* daily cheapest price across sites for a model, [{d, p, site}] sorted.
+     Each site's series is forward-filled across gaps of up to 7 days, so a
+     missed scrape doesn't read as a price change in the minimum. */
+  function cheapestSeries(model) {
+    const perSite = HISTORY[model];
+    if (!perSite) return [];
+    const dates = [...new Set(
+      Object.values(perSite).flatMap(pts => pts.map(p => p[0]))
+    )].sort();
+    const FILL_MS = 7 * 86400000;
+    const byDay = {};
+    for (const [site, points] of Object.entries(perSite)) {
+      const map = new Map(points);
+      let lastD = null, lastP = null;
+      for (const d of dates) {
+        if (map.has(d)) { lastD = d; lastP = map.get(d); }
+        else if (lastD && (new Date(d) - new Date(lastD)) > FILL_MS) lastP = null;
+        if (lastP == null) continue;
+        if (!byDay[d] || lastP < byDay[d].p) byDay[d] = { d, p: lastP, site };
+      }
+    }
+    let series = Object.values(byDay).sort((a, b) => a.d < b.d ? -1 : 1);
+    if (RANGE_DAYS > 0) {
+      const cutoff = new Date(Date.now() - RANGE_DAYS * 86400000).toISOString().slice(0, 10);
+      series = series.filter(pt => pt.d >= cutoff);
+    }
+    return series;
+  }
+
+  const SPARK_W = 460, SPARK_H = 74, SPARK_PAD = { t: 8, r: 8, b: 6, l: 8 };
+
+  function buildSparkline(model, cardIdx) {
+    const series = cheapestSeries(model);
+    if (series.length < 2) return '';
+
+    const prices = series.map(pt => pt.p);
+    const lo = Math.min(...prices), hi = Math.max(...prices);
+    const span = (hi - lo) || 1;
+    const w = SPARK_W - SPARK_PAD.l - SPARK_PAD.r;
+    const h = SPARK_H - SPARK_PAD.t - SPARK_PAD.b;
+    const X = i => SPARK_PAD.l + (series.length === 1 ? w / 2 : (i / (series.length - 1)) * w);
+    const Y = p => SPARK_PAD.t + h - ((p - lo) / span) * h;
+
+    const line = series.map((pt, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)},${Y(pt.p).toFixed(1)}`).join('');
+    const area = `${line}L${X(series.length - 1).toFixed(1)},${SPARK_H - SPARK_PAD.b}L${X(0).toFixed(1)},${SPARK_H - SPARK_PAD.b}Z`;
+    const last = series[series.length - 1];
+
+    /* recessive midline gridline */
+    const midY = SPARK_PAD.t + h / 2;
+
+    return `<div class="spark-wrap">
+      <div class="spark-head">
+        <span class="spark-title">Prezzo più basso — andamento</span>
+        <span class="spark-range">min ${fmtEur0(lo)} · max ${fmtEur0(hi)}</span>
+      </div>
+      <div class="spark-box" data-spark="${cardIdx}">
+        <svg viewBox="0 0 ${SPARK_W} ${SPARK_H}" preserveAspectRatio="none" aria-label="Andamento del prezzo più basso per ${esc(model)}">
+          <line x1="${SPARK_PAD.l}" y1="${midY}" x2="${SPARK_W - SPARK_PAD.r}" y2="${midY}" stroke="var(--grid)" stroke-width="1"/>
+          <path d="${area}" fill="var(--trend-wash)"/>
+          <path d="${line}" fill="none" stroke="var(--trend)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+          <line class="tip-x" x1="0" y1="${SPARK_PAD.t - 3}" x2="0" y2="${SPARK_H - SPARK_PAD.b}" stroke="var(--baseline)" stroke-width="1" style="display:none"/>
+          <circle class="tip-dot" r="4" fill="var(--trend)" stroke="var(--surface)" stroke-width="2" style="display:none"/>
+          <circle cx="${X(series.length - 1)}" cy="${Y(last.p)}" r="4" fill="var(--trend)" stroke="var(--surface)" stroke-width="2"/>
+        </svg>
+        <div class="spark-tip"></div>
+      </div>
+    </div>`;
+  }
+
+  /* hover layer: crosshair snapping to nearest date + tooltip */
+  function wireSparkline(box, model) {
+    const series = cheapestSeries(model);
+    if (series.length < 2) return;
+    const svg = box.querySelector('svg');
+    const tip = box.querySelector('.spark-tip');
+    const xline = svg.querySelector('.tip-x');
+    const dot = svg.querySelector('.tip-dot');
+
+    const w = SPARK_W - SPARK_PAD.l - SPARK_PAD.r;
+    const h = SPARK_H - SPARK_PAD.t - SPARK_PAD.b;
+    const prices = series.map(pt => pt.p);
+    const lo = Math.min(...prices), hi = Math.max(...prices);
+    const span = (hi - lo) || 1;
+    const X = i => SPARK_PAD.l + (i / (series.length - 1)) * w;
+    const Y = p => SPARK_PAD.t + h - ((p - lo) / span) * h;
+
+    function onMove(ev) {
+      const rect = svg.getBoundingClientRect();
+      const fx = (ev.clientX - rect.left) / rect.width * SPARK_W;
+      const i = Math.max(0, Math.min(series.length - 1,
+        Math.round((fx - SPARK_PAD.l) / w * (series.length - 1))));
+      const pt = series[i];
+      const px = X(i), py = Y(pt.p);
+      xline.setAttribute('x1', px); xline.setAttribute('x2', px);
+      xline.style.display = '';
+      dot.setAttribute('cx', px); dot.setAttribute('cy', py);
+      dot.style.display = '';
+      tip.style.display = 'block';
+      tip.style.left = (px / SPARK_W * rect.width) + 'px';
+      tip.style.top = (py / SPARK_H * rect.height - 8) + 'px';
+      tip.replaceChildren();
+      const v = document.createElement('div');
+      v.className = 'v'; v.textContent = fmtEur(pt.p);
+      const m = document.createElement('div');
+      m.textContent = fmtDay(pt.d) + ' · ' + pt.site;
+      tip.append(v, m);
+    }
+    function onLeave() {
+      tip.style.display = 'none';
+      xline.style.display = 'none';
+      dot.style.display = 'none';
+    }
+    box.addEventListener('pointermove', onMove);
+    box.addEventListener('pointerleave', onLeave);
+  }
+
+  /* ── card ─────────────────────────────────────────────────────────────── */
+
+  function buildCard(model, perSite, cardIdx) {
+    const rows = Object.values(perSite).sort((a, b) => a.price_eur - b.price_eur);
+    const inStock = rows.filter(r => r.stock_status !== 'out_of_stock');
+    const allOut = inStock.length === 0;
+    const best = (inStock.length ? inStock : rows)[0];
+    const maxP = Math.max(...rows.map(r => r.price_eur));
+    const spec = (LATEST.specs || {})[model] || '';
+    const records = historyForModel(model);
+
+    const rowsHtml = rows.map(r => {
+      const isOut = r.stock_status === 'out_of_stock';
+      const isBest = !isOut && r === best && rows.length > 1;
+      const barW = maxP > 0 ? Math.max(4, Math.round(r.price_eur / maxP * 100)) : 100;
+      const since = isOut ? soldOutSince(records, r.site) : null;
+      const outTag = isOut
+        ? `<span class="tag tag-out">⛔ Esaurito${since ? ' dal ' + esc(fmtDay(since)) : ''}</span>` : '';
+      const bestTag = isBest ? `<span class="tag tag-best">✓ migliore</span>` : '';
+      return `<div class="price-row${isOut ? ' out-of-stock' : ''}">
+        <span class="site-pip ${siteClass(r.site)}"></span>
+        <span class="site-label" title="${esc(r.product_name)}">${esc(r.site)}</span>
+        <div class="bar-track"><div class="bar-fill ${siteClass(r.site)}" style="width:${barW}%"></div></div>
+        <span class="price-num">${fmtEur(r.price_eur)}</span>
+        ${bestTag}${outTag}
+        <a class="link-btn" href="${esc(r.url)}" target="_blank" rel="noopener" title="Apri su ${esc(r.site)}">${svgExternal()}</a>
+      </div>`;
+    }).join('');
+
+    const bestPill = allOut
+      ? `<div class="best-pill all-out"><div class="lbl">Disponibilità</div><div class="val">Esaurito ovunque</div></div>`
+      : `<div class="best-pill"><div class="lbl">Miglior prezzo</div>
+           <div class="val">${fmtEur(best.price_eur)}</div>
+           <div class="sub">${esc(best.site)}</div></div>`;
+
+    const allOutBanner = allOut
+      ? `<div class="allout-banner">⛔ Esaurito su tutti i siti monitorati</div>` : '';
+
+    return `<div class="card" data-model="${esc(model)}">
+      <div class="card-head">
+        <div>
+          <div class="model-name">${esc(model)}</div>
+          ${spec ? `<div class="model-spec">${esc(spec)}</div>` : ''}
+          <div class="model-meta">${rows.length} sit${rows.length === 1 ? 'o' : 'i'} · ${inStock.length} disponibil${inStock.length === 1 ? 'e' : 'i'}</div>
+        </div>
+        ${bestPill}
+      </div>
+      <div class="card-body">
+        ${allOutBanner}
+        ${rowsHtml}
+        ${buildSparkline(model, cardIdx)}
+        ${buildStockHistory(records)}
+      </div>
+    </div>`;
+  }
+
+  /* ── other-products table ─────────────────────────────────────────────── */
+
+  function buildOtherSection(others) {
+    if (!others.length) return '';
+    /* dedupe by site+name, cheapest first */
+    const seen = {};
+    for (const r of others) {
+      const k = r.site + '|' + r.product_name;
+      if (!seen[k] || r.price_eur < seen[k].price_eur) seen[k] = r;
+    }
+    const rows = Object.values(seen).sort((a, b) => b.price_eur - a.price_eur);
+    const meta = CATEGORY_META.other;
+    const trs = rows.map(r => `<tr>
+      <td class="name">${esc(r.product_name)}</td>
+      <td><span class="site-cell"><span class="site-pip ${siteClass(r.site)}"></span>${esc(r.site)}</span></td>
+      <td class="price">${fmtEur(r.price_eur)}</td>
+      <td><a class="link-btn" href="${esc(r.url)}" target="_blank" rel="noopener" title="Apri su ${esc(r.site)}">${svgExternal()}</a></td>
+    </tr>`).join('');
+    return `<div class="section">
+      <div class="section-head">
+        <span class="section-title">${meta.title}</span>
+        <span class="section-sub">${meta.sub}</span>
+      </div>
+      <div class="other-table-wrap">
+        <table class="other">
+          <thead><tr><th>Prodotto</th><th>Sito</th><th style="text-align:right">Prezzo</th><th></th></tr></thead>
+          <tbody>${trs}</tbody>
+        </table>
+      </div>
+    </div>`;
+  }
+
+  /* ── health panel ─────────────────────────────────────────────────────── */
 
   const STATUS_KIND = {
     success: 'ok', retried: 'ok', playwright: 'ok', ok: 'ok',
@@ -670,247 +755,118 @@
     blocked: 'bad', failed: 'bad',
   };
   const STATUS_LABEL = {
-    success: 'ok', retried: 'ok (retried)', playwright: 'ok (browser)',
-    empty: 'no products', no_shop: 'no shop',
-    blocked: 'blocked', failed: 'failed',
+    success: 'ok', retried: 'ok (2° tentativo)', playwright: 'ok (browser)',
+    empty: 'nessun prodotto', no_shop: 'nessun negozio',
+    blocked: 'bloccato', failed: 'errore',
   };
-
-  function relTime(iso) {
-    if (!iso) return 'never';
-    const ms = Date.now() - new Date(iso).getTime();
-    if (isNaN(ms)) return '?';
-    const mins = Math.round(ms / 60000);
-    if (mins < 60)   return mins + 'm ago';
-    const hrs = Math.round(mins / 60);
-    if (hrs < 48)    return hrs + 'h ago';
-    return Math.round(hrs / 24) + 'd ago';
-  }
 
   function renderHealth(health) {
     if (!health || !health.sites) return;
     const chips = Object.entries(health.sites)
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([site, s]) => {
-        const kind  = STATUS_KIND[s.status] || 'warn';
+        const kind = STATUS_KIND[s.status] || 'warn';
         const label = STATUS_LABEL[s.status] || s.status;
-        const meta  = s.product_count > 0
+        const meta = s.product_count > 0
           ? `${s.product_count} · ${relTime(s.last_success)}`
-          : `${label} · last ok ${relTime(s.last_success)}`;
-        return `<span class="health-chip" title="status: ${label} — last run ${relTime(s.last_run)}">
-          <span class="health-dot ${kind}"></span>${site}<span class="meta">${meta}</span>
-        </span>`;
+          : `${label} · ultimo ok ${relTime(s.last_success)}`;
+        return `<span class="health-chip" title="stato: ${esc(label)} — ultimo controllo ${esc(relTime(s.last_run))}">
+          <span class="health-dot ${kind}"></span>${esc(site)}<span class="meta">${esc(meta)}</span></span>`;
       }).join('');
-    document.getElementById('health-grid').innerHTML  = chips;
+    document.getElementById('health-grid').innerHTML = chips;
     document.getElementById('health-panel').style.display = 'block';
   }
 
-  /* ── Stock history helpers ──────────────────────────────────────────── */
+  /* ── render ───────────────────────────────────────────────────────────── */
 
-  let STOCK_HISTORY = [];          /* raw records from stock_history.json */
+  function render() {
+    const rows = LATEST.rows.filter(r => r.price_eur > 0);
+    const { models, others } = groupRows(rows);
 
-  function fmtDay(iso) {
-    const d = new Date(iso);
-    return isNaN(d) ? '' : d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
-  }
-
-  function daysSince(iso) {
-    const ms = Date.now() - new Date(iso).getTime();
-    return isNaN(ms) ? null : Math.max(0, Math.floor(ms / 86400000));
-  }
-
-  /* records for one model, newest first */
-  function historyForModel(model) {
-    return STOCK_HISTORY
-      .filter(rec => canonicalModel(rec.product_name) === model)
-      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-  }
-
-  /* most recent transition to out_of_stock for a given site+model */
-  function soldOutSince(records, site) {
-    const rec = records.find(r => r.site === site && r.new_status === 'out_of_stock');
-    return rec ? rec.timestamp : null;
-  }
-
-  function buildStockHistory(records, rows) {
-    const oosRows = rows.filter(r => (r.stock_status || 'unknown') === 'out_of_stock');
-    if (records.length === 0 && oosRows.length === 0) return '';
-
-    /* prominent "sold out since" alerts for currently unavailable items */
-    const alerts = oosRows.map(r => {
-      const since = soldOutSince(records, r.site);
-      const days  = since ? daysSince(since) : null;
-      const sinceTxt = since
-        ? `esaurito dal ${fmtDay(since)}`
-        : 'esaurito (da prima del tracking)';
-      const daysTxt = days !== null
-        ? `<span class="days">${days === 0 ? 'oggi' : days + ' g'}</span>` : '';
-      return `<div class="oos-alert">⛔ ${r.site} — ${sinceTxt}${daysTxt}</div>`;
-    }).join('');
-
-    /* last few transitions (max 4) */
-    const lines = records.slice(0, 4).map(rec => {
-      const out  = rec.new_status === 'out_of_stock';
-      const what = out ? 'esaurito' : 'di nuovo disponibile';
-      return `<div class="history-line">
-        <span class="h-date">${fmtDay(rec.timestamp)}</span>
-        <span class="h-dot ${out ? 'out' : 'in'}"></span>
-        <span>${rec.site} · ${what}</span>
-      </div>`;
-    }).join('');
-
-    if (!alerts && !lines) return '';
-    return `<div class="stock-history">
-      <div class="stock-history-title">Stock history</div>
-      ${alerts}${lines}
-    </div>`;
-  }
-
-  /* ── Card builder ───────────────────────────────────────────────────── */
-
-  function buildCard(model, rows) {
-    const prices  = rows.map(r => r.price_eur);
-    const minP    = Math.min(...prices);
-    const maxP    = Math.max(...prices);
-    // Exclude sold-out rows from the average so it reflects available prices
-    const availPrices = rows
-      .filter(r => (r.stock_status || 'unknown') !== 'out_of_stock')
-      .map(r => r.price_eur);
-    const avg = availPrices.length > 0
-      ? availPrices.reduce((a, b) => a + b, 0) / availPrices.length
-      : prices.reduce((a, b) => a + b, 0) / prices.length;
-    const spec    = specForModel(model);
-    const multi   = rows.length > 1;
-    const records = historyForModel(model);
-
-    const rowsHtml = rows.map(r => {
-      const sk         = siteKey(r.site);
-      const isMin      = r.price_eur === minP;
-      const barWidth   = maxP > 0 ? Math.round((r.price_eur / maxP) * 100) : 100;
-      const isOos      = (r.stock_status || 'unknown') === 'out_of_stock';
-      const cheapTag   = (multi && isMin && !isOos)
-        ? `<span class="cheap-tag">cheapest</span>`
-        : '';
-      const oosSince   = isOos ? soldOutSince(records, r.site) : null;
-      const esauritoTag = isOos
-        ? `<span class="esaurito-badge">ESAURITO${oosSince ? ' dal ' + fmtDay(oosSince) : ''}</span>`
-        : '';
-      const oosClass   = isOos ? ' out-of-stock' : '';
-
-      return `<div class="price-row${oosClass}">
-        <span class="site-pip pip-${sk}"></span>
-        <span class="site-label" title="${r.site}">${r.site}</span>
-        <div class="bar-track">
-          <div class="bar-fill bar-${sk}" style="width:${barWidth}%"></div>
-        </div>
-        <span class="price-num">${fmtEur(r.price_eur)}</span>
-        ${cheapTag}${esauritoTag}
-        <a class="link-btn" href="${r.url}" target="_blank" rel="noopener"
-           title="View on ${r.site}">${svgExternal()}</a>
-      </div>`;
-    }).join('');
-
-    return `<div class="card">
-      <div class="card-head">
-        <div>
-          <div class="model-name">${model}</div>
-          ${spec ? `<div class="model-spec">${spec}</div>` : ''}
-        </div>
-        <div class="avg-pill">
-          <div class="avg-lbl">avg</div>
-          <div class="avg-val">${fmtEur(avg)}</div>
-        </div>
-      </div>
-      <div class="card-body">${rowsHtml}${buildStockHistory(records, rows)}</div>
-    </div>`;
-  }
-
-  /* ── Legend builder ─────────────────────────────────────────────────── */
-
-  function buildLegend(sitesPresent) {
-    const items = sitesPresent
-      .map(site =>
-        `<span class="legend-item">
-          <span class="legend-dot pip-${siteKey(site)}"></span>${site}
-        </span>`
-      ).join('');
-    return `<span class="legend-label">Sites</span>${items}`;
-  }
-
-  /* ── Render ─────────────────────────────────────────────────────────── */
-
-  function render(allRows) {
-    const groups = groupRows(allRows);
-
-    /* sort models by average price desc (most premium first) */
-    const sorted = Object.entries(groups).sort((a, b) => {
-      const avgA = a[1].reduce((s, r) => s + r.price_eur, 0) / a[1].length;
-      const avgB = b[1].reduce((s, r) => s + r.price_eur, 0) / b[1].length;
-      return avgB - avgA;
-    });
-
-    if (sorted.length === 0) {
-      document.getElementById('status').innerHTML =
-        '<p style="color:#64748b">No InSinkErator model data found in the sheet.</p>';
-      return;
-    }
-
-    /* collect unique raw site names from data */
-    const sitesPresent = [...new Set(allRows.map(r => r.site).filter(Boolean))].sort();
+    const sitesPresent = [...new Set(rows.map(r => r.site))].sort();
 
     /* header stats */
-    const dates = allRows.map(r => r.date).filter(Boolean);
-    if (dates.length) document.getElementById('hdr-date').textContent = dates[0];
-    document.getElementById('hdr-models').textContent = sorted.length;
-    document.getElementById('hdr-sites').textContent  = sitesPresent.length;
+    document.getElementById('hdr-models').textContent = Object.keys(models).length;
+    document.getElementById('hdr-sites').textContent = sitesPresent.length;
+    document.getElementById('hdr-listings').textContent = rows.length;
+    document.getElementById('hdr-date').textContent = LATEST.date || fmtDay(LATEST.generated);
 
-    document.getElementById('legend').innerHTML = buildLegend(sitesPresent);
-    document.getElementById('grid').innerHTML   = sorted.map(([m, rows]) => buildCard(m, rows)).join('');
+    /* legend */
+    document.getElementById('legend').innerHTML =
+      `<span class="legend-label">Siti</span>` + sitesPresent.map(site =>
+        `<span class="legend-item"><span class="legend-dot ${siteClass(site)}"></span>${esc(site)}</span>`
+      ).join('');
+
+    /* sections by category, models by popularity */
+    let cardIdx = 0;
+    const sectionsHtml = CATEGORY_ORDER.map(cat => {
+      const catModels = sortModels(models, rows)
+        .filter(m => modelCategory(m, rows) === cat);
+      if (!catModels.length) return '';
+      const meta = CATEGORY_META[cat];
+      const cards = catModels.map(m => buildCard(m, models[m], cardIdx++)).join('');
+      return `<div class="section">
+        <div class="section-head">
+          <span class="section-title">${meta.title}</span>
+          <span class="section-sub">${meta.sub}</span>
+        </div>
+        <div class="grid">${cards}</div>
+      </div>`;
+    }).join('') + buildOtherSection(others);
+
+    document.getElementById('sections').innerHTML = sectionsHtml;
+
+    /* wire sparkline hover layers */
+    document.querySelectorAll('.card').forEach(card => {
+      const model = card.getAttribute('data-model');
+      const box = card.querySelector('.spark-box');
+      if (box) wireSparkline(box, model);
+    });
+
     document.getElementById('footer-sites').innerHTML = sitesPresent
-      .map(s => `<a href="https://www.${s}" target="_blank" rel="noopener">${s}</a>`)
+      .map(s => `<a href="https://www.${esc(s)}" target="_blank" rel="noopener">${esc(s)}</a>`)
       .join(' · ');
 
-    document.getElementById('status').style.display  = 'none';
+    document.getElementById('status').style.display = 'none';
     document.getElementById('content').style.display = 'block';
   }
 
-  /* ── Fetch ──────────────────────────────────────────────────────────── */
+  /* range picker re-renders all charts against the same slice */
+  document.getElementById('range-picker').addEventListener('click', ev => {
+    const btn = ev.target.closest('button');
+    if (!btn) return;
+    RANGE_DAYS = parseInt(btn.dataset.days, 10);
+    document.querySelectorAll('#range-picker button')
+      .forEach(b => b.classList.toggle('active', b === btn));
+    render();
+  });
 
-  /* site_health.json + stock_history.json live next to this page in the repo;
-     if they are missing (or we're on file://) the dashboard still works. */
-  function fetchJson(path) {
-    return fetch(path).then(r => (r.ok ? r.json() : null)).catch(() => null);
-  }
+  /* ── fetch ────────────────────────────────────────────────────────────── */
 
-  const sideData = Promise.all([
-    fetchJson('site_health.json'),
+  const fetchJson = path => fetch(path).then(r => (r.ok ? r.json() : null)).catch(() => null);
+
+  Promise.all([
+    fetchJson('latest.json'),
+    fetchJson('price_history.json'),
     fetchJson('stock_history.json'),
-  ]);
-
-  Papa.parse(CSV_URL, {
-    download:        true,
-    header:          true,
-    dynamicTyping:   false,
-    skipEmptyLines:  true,
-    complete(results) {
-      const rows = results.data
-        .map(r => ({ ...r, price_eur: parseFloat(r.price_eur), stock_status: r.stock_status || 'unknown' }))
-        .filter(r => !isNaN(r.price_eur) && r.price_eur > 0);
-      sideData.then(([health, history]) => {
-        STOCK_HISTORY = Array.isArray(history) ? history : [];
-        render(rows);
-        renderHealth(health);
-      });
-    },
-    error(err) {
+    fetchJson('site_health.json'),
+  ]).then(([latest, history, stock, health]) => {
+    if (!latest || !Array.isArray(latest.rows)) {
       document.getElementById('status').style.display = 'none';
       const box = document.getElementById('err');
       box.style.display = 'block';
       const isLocal = location.protocol === 'file:';
       box.innerHTML = isLocal
-        ? '<strong>CORS error</strong> — the browser blocks cross-origin requests from <code>file://</code>. ' +
-          'Serve this file over HTTP (e.g. <code>python3 -m http.server 8080</code>) or deploy to GitHub Pages.'
-        : 'Could not load data: ' + (err.message || err);
-    },
+        ? '<strong>Impossibile caricare i dati</strong> — il browser blocca le richieste da <code>file://</code>. ' +
+          'Servi la pagina via HTTP (es. <code>python3 -m http.server 8080</code>) o usa GitHub Pages.'
+        : '<strong>latest.json non trovato</strong> — esegui <code>python3 scraper.py</code> per generare i dati.';
+      return;
+    }
+    LATEST = latest;
+    HISTORY = history || {};
+    STOCK = Array.isArray(stock) ? stock : [];
+    render();
+    renderHealth(health);
   });
 </script>
 </body>

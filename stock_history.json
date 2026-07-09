@@ -4,125 +4,143 @@
     "site": "climaconvenienza.it",
     "old_status": "in_stock",
     "new_status": "out_of_stock",
-    "timestamp": "2026-05-12T00:00:00+00:00"
+    "timestamp": "2026-05-12T00:00:00+00:00",
+    "model": "Premium 700 EC"
   },
   {
     "product_name": "Tritarifiuti Alimentari InSinkErator Power Premium 550 EC",
     "site": "climaconvenienza.it",
     "old_status": "in_stock",
     "new_status": "out_of_stock",
-    "timestamp": "2026-05-12T00:00:00+00:00"
+    "timestamp": "2026-05-12T00:00:00+00:00",
+    "model": "Premium 550 EC"
   },
   {
     "product_name": "Tritarifiuti Alimentari InSinkErator Advanced Evolution Plus 1000 EC",
     "site": "climaconvenienza.it",
     "old_status": "in_stock",
     "new_status": "out_of_stock",
-    "timestamp": "2026-05-12T00:00:00+00:00"
+    "timestamp": "2026-05-12T00:00:00+00:00",
+    "model": "Evolution Plus 1000 EC"
   },
   {
     "product_name": "Miscelatore doccia ad incasso Nobili ABC cromato",
     "site": "climaconvenienza.it",
     "old_status": "in_stock",
     "new_status": "out_of_stock",
-    "timestamp": "2026-05-12T00:00:00+00:00"
+    "timestamp": "2026-05-12T00:00:00+00:00",
+    "model": null
   },
   {
     "product_name": "Miscelatore doccia ad incasso con deviatore Nobili YOYO",
     "site": "climaconvenienza.it",
     "old_status": "in_stock",
     "new_status": "out_of_stock",
-    "timestamp": "2026-05-12T00:00:00+00:00"
+    "timestamp": "2026-05-12T00:00:00+00:00",
+    "model": null
   },
   {
     "product_name": "Box da Incasso Fondital Entry Level per Caldaia Ischia IN KC",
     "site": "climaconvenienza.it",
     "old_status": "in_stock",
     "new_status": "out_of_stock",
-    "timestamp": "2026-05-12T00:00:00+00:00"
+    "timestamp": "2026-05-12T00:00:00+00:00",
+    "model": null
   },
   {
     "product_name": "Tritarifiuti Alimentari InSinkErator serie M Modello 56",
     "site": "climaconvenienza.it",
     "old_status": "in_stock",
     "new_status": "out_of_stock",
-    "timestamp": "2026-05-12T00:00:00+00:00"
+    "timestamp": "2026-05-12T00:00:00+00:00",
+    "model": "M 56"
   },
   {
     "product_name": "Dissipatore di rifiuti alimentari Tritarifiuti InSinkErator Serie M Mod. 46",
     "site": "climaconvenienza.it",
     "old_status": "in_stock",
     "new_status": "out_of_stock",
-    "timestamp": "2026-05-12T00:00:00+00:00"
+    "timestamp": "2026-05-12T00:00:00+00:00",
+    "model": "M 46"
   },
   {
     "product_name": "Tritarifiuti Alimentari InSinkErator Power Premium 700 EC",
     "site": "climaconvenienza.it",
     "old_status": "out_of_stock",
     "new_status": "in_stock",
-    "timestamp": "2026-05-13T00:00:00+00:00"
+    "timestamp": "2026-05-13T00:00:00+00:00",
+    "model": "Premium 700 EC"
   },
   {
     "product_name": "Tritarifiuti Alimentari InSinkErator Power Premium 550 EC",
     "site": "climaconvenienza.it",
     "old_status": "out_of_stock",
     "new_status": "in_stock",
-    "timestamp": "2026-05-13T00:00:00+00:00"
+    "timestamp": "2026-05-13T00:00:00+00:00",
+    "model": "Premium 550 EC"
   },
   {
     "product_name": "Tritarifiuti Alimentari InSinkErator Advanced Evolution Plus 1000 EC",
     "site": "climaconvenienza.it",
     "old_status": "out_of_stock",
     "new_status": "in_stock",
-    "timestamp": "2026-05-13T00:00:00+00:00"
+    "timestamp": "2026-05-13T00:00:00+00:00",
+    "model": "Evolution Plus 1000 EC"
   },
   {
     "product_name": "Miscelatore doccia ad incasso Nobili ABC cromato",
     "site": "climaconvenienza.it",
     "old_status": "out_of_stock",
     "new_status": "in_stock",
-    "timestamp": "2026-05-13T00:00:00+00:00"
+    "timestamp": "2026-05-13T00:00:00+00:00",
+    "model": null
   },
   {
     "product_name": "Miscelatore doccia ad incasso con deviatore Nobili YOYO",
     "site": "climaconvenienza.it",
     "old_status": "out_of_stock",
     "new_status": "in_stock",
-    "timestamp": "2026-05-13T00:00:00+00:00"
+    "timestamp": "2026-05-13T00:00:00+00:00",
+    "model": null
   },
   {
     "product_name": "Box da Incasso Fondital Entry Level per Caldaia Ischia IN KC",
     "site": "climaconvenienza.it",
     "old_status": "out_of_stock",
     "new_status": "in_stock",
-    "timestamp": "2026-05-13T00:00:00+00:00"
+    "timestamp": "2026-05-13T00:00:00+00:00",
+    "model": null
   },
   {
     "product_name": "Tritarifiuti Alimentari InSinkErator serie M Modello 56",
     "site": "climaconvenienza.it",
     "old_status": "out_of_stock",
     "new_status": "in_stock",
-    "timestamp": "2026-05-13T00:00:00+00:00"
+    "timestamp": "2026-05-13T00:00:00+00:00",
+    "model": "M 56"
   },
   {
     "product_name": "Dissipatore di rifiuti alimentari Tritarifiuti InSinkErator Serie M Mod. 46",
     "site": "climaconvenienza.it",
     "old_status": "out_of_stock",
     "new_status": "in_stock",
-    "timestamp": "2026-05-13T00:00:00+00:00"
+    "timestamp": "2026-05-13T00:00:00+00:00",
+    "model": "M 46"
   },
   {
     "product_name": "Tritarifiuti Alimentari InSinkErator serie M Modello 56",
     "site": "climaconvenienza.it",
     "old_status": "in_stock",
     "new_status": "out_of_stock",
-    "timestamp": "2026-07-09T00:00:00+00:00"
+    "timestamp": "2026-07-09T00:00:00+00:00",
+    "model": "M 56"
   },
   {
     "product_name": "Dissipatore di rifiuti alimentari Tritarifiuti InSinkErator Serie M Mod. 46",
     "site": "climaconvenienza.it",
     "old_status": "in_stock",
     "new_status": "out_of_stock",
-    "timestamp": "2026-07-09T00:00:00+00:00"
+    "timestamp": "2026-07-09T00:00:00+00:00",
+    "model": "M 46"
   }
 ]

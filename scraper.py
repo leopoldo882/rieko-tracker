@@ -48,19 +48,20 @@ USER_AGENTS = [
 
 # Expected product counts per site — used for the end-of-run warning.
 # Sites not listed here are known SPA/blocked and always return 0.
+# Counts observed 2026-07-09 with the brand + accessory filters in place.
 TYPICAL_COUNTS = {
-    "trovaincasso.it": 6,
-    "pentoleprofessionali.it": 5,
+    "trovaincasso.it": 5,
+    "pentoleprofessionali.it": 6,
     "bricobravo.com": 4,
-    "lineadaincasso.it": 23,
-    "opportunitycommerce.com": 10,
+    "lineadaincasso.it": 17,
+    "opportunitycommerce.com": 9,
     "climaconvenienza.it": 5,
     "caldaiemurali.it": 5,
     "tritarifiutidomesticoservice.it": 4,
     "kelsostore.it": 4,
     "yeppon.it": 5,
-    "vieffetrade.com": 26,
-    "amazon.it": 35,
+    "vieffetrade.com": 22,
+    "amazon.it": 13,
 }
 
 BASE_HEADERS = {
@@ -143,8 +144,9 @@ def parse_price(raw: str) -> Optional[float]:
 _ACCESSORY_WORDS = re.compile(
     r"\b(tappo|guarnizione|accessor\w*|ricambio|filtro|flangia|coperchio|kit"
     r"|splash|stopper|seal|spare\s*part|ricambi|1975"
-    r"|copertura|spazzolino|detersivo|paraspruzzi|collarino|adattatore"
-    r"|interruttore|blancocare"
+    r"|copertura|spazzolino|detersivo|paraspruzzi|collarino|adattatore|adapter"
+    r"|interruttore|blancocare|pulsante|cca-00|water\s*filter|f[\s-]?1000"
+    r"|throat\s*guard|deflettore|chiave|overload|rubber\s*boot|dispenser\s+di\s+sapone"
     r"|\d+\s*pezzi)\b",
     re.IGNORECASE,
 )
@@ -161,7 +163,8 @@ _OUT_OF_STOCK_RE = re.compile(
 # like "Dissipatore ecologico con tappo salvaposate" mention accessories that
 # are bundled in — they must NOT be filtered out.
 _DISPOSAL_WORDS = re.compile(
-    r"dissipatore|tritarifiuti|disposer|food\s*waste|evolution|badger"
+    r"dissipatore|tritarifiuti|tritatutto|trituratore|disposer|food\s*waste"
+    r"|smaltimento\s+(?:dei\s+)?rifiuti|eliminatore|evolution|badger"
     r"|lc[\s-]?50|erogatore",
     re.IGNORECASE,
 )
@@ -183,6 +186,141 @@ def is_accessory(name: str, price: Optional[float] = None) -> bool:
     if _DISPOSAL_WORDS.search(name):
         return price is not None and price < _ACCESSORY_PRICE_CEILING
     return True
+
+
+# ── Model canonicalization ─────────────────────────────────────────────────────
+#
+# Maps messy retailer product names to one canonical model per real product,
+# so the dashboard can group listings across sites. Article numbers are the
+# most reliable signal and are checked first; name patterns are ordered so the
+# most specific match wins. This is the single source of truth — index.html
+# consumes the pre-computed "model"/"category" fields from latest.json and
+# price_history.json instead of re-deriving them.
+
+CAT_DISPOSER = "disposer"
+CAT_TAP = "tap"
+CAT_OTHER = "other"
+
+# InSinkErator article number → (canonical model, category)
+ARTICLE_MODELS = {
+    "1974100": ("Evolution Plus 1000 EC", CAT_DISPOSER),
+    "1974750": ("Evolution Plus 750 EC", CAT_DISPOSER),
+    "1974700": ("Premium 700 EC", CAT_DISPOSER),
+    # trovaincasso labels 1974550 "Evolution Plus 550 EC" — same article as
+    # everyone else's Premium 550 EC, so the article match must win.
+    "1974550": ("Premium 550 EC", CAT_DISPOSER),
+    # 1976xxx = SR (SoundSeal + pneumatic switch) variants; 197x1xx = ex names
+    "1976100": ("Evolution Plus 1000 SR", CAT_DISPOSER),
+    "1976750": ("Evolution Plus 750 SR", CAT_DISPOSER),
+    "1976700": ("Premium 700 SR", CAT_DISPOSER),
+    "1976550": ("Premium 550 SR", CAT_DISPOSER),
+    "1976460": ("Standard 460", CAT_DISPOSER),
+    "1971100": ("Evolution Plus 750 EC", CAT_DISPOSER),   # ex Evolution 100
+    "1972046": ("M 46", CAT_DISPOSER),
+    "1972056": ("M 56", CAT_DISPOSER),
+    "1975078": ("LC-50 Professional", CAT_DISPOSER),
+    "1975525": ("3N1 Touch", CAT_TAP),
+    "1975520": ("GN1100", CAT_TAP),
+    "1975518": ("HC1100", CAT_TAP),
+    "1975522": ("H3300", CAT_TAP),
+    "1975521": ("HC3300", CAT_TAP),
+    # Tap + NeoTank (+ filter) bundle articles
+    "1975541": ("GN1100 kit NeoTank", CAT_TAP),
+    "1975542": ("HC1100 kit NeoTank", CAT_TAP),
+    "1975543": ("H3300 kit NeoTank", CAT_TAP),
+    "1975532": ("H3300 kit NeoTank", CAT_TAP),
+    "1975544": ("HC3300 kit NeoTank", CAT_TAP),
+    "1975545": ("HC3300 kit NeoTank", CAT_TAP),
+    "1975557": ("4N1 Touch", CAT_TAP),
+    "1975556": ("NeoTank", CAT_TAP),
+}
+
+# Ordered (pattern, model, category) rules applied to the lowercased name.
+# First match wins; keep ex-model aliases and SR variants before the broader
+# numeric patterns they would otherwise fall into.
+MODEL_NAME_RULES = [
+    (r"lc[\s.-]?50", "LC-50 Professional", CAT_DISPOSER),
+    (r"evolution\s*200\b", "Evolution Plus 1000 EC", CAT_DISPOSER),   # ex name
+    (r"evolution\s*100\b", "Evolution Plus 750 EC", CAT_DISPOSER),    # ex name
+    (r"1000\s*sr", "Evolution Plus 1000 SR", CAT_DISPOSER),
+    (r"\b1000\b", "Evolution Plus 1000 EC", CAT_DISPOSER),
+    (r"750\s*sr", "Evolution Plus 750 SR", CAT_DISPOSER),
+    (r"\b750\b", "Evolution Plus 750 EC", CAT_DISPOSER),
+    (r"\b700\b|ise\s*66", "Premium 700 EC", CAT_DISPOSER),
+    (r"550\s*sr", "Premium 550 SR", CAT_DISPOSER),
+    (r"\b550\b|ise\s*56", "Premium 550 EC", CAT_DISPOSER),
+    (r"\b460\b|460\s*sr|460sr|ise\s*46", "Standard 460", CAT_DISPOSER),
+    (r"serie\s*m.*\b46\b|\bm\s*46\b|modello\s*46\b|mod\.?\s*46\b", "M 46", CAT_DISPOSER),
+    (r"serie\s*m.*\b56\b|\bm\s*56\b|modello\s*56\b|mod\.?\s*56\b", "M 56", CAT_DISPOSER),
+    (r"badger", "Badger 5", CAT_DISPOSER),
+    (r"evo\s*cvr\s*cntrl|cover\s*control", "Evolution Cover Control", CAT_DISPOSER),
+    (r"power\s*0[.,]?75|power\s*750", "Power 0.75 HP", CAT_DISPOSER),
+    (r"pro\s*750|pro750", "PRO750", CAT_DISPOSER),
+    (r"hc[\s.-]?1100", "HC1100", CAT_TAP),
+    (r"gn[\s.-]?1100", "GN1100", CAT_TAP),
+    (r"hc[\s.-]?3300", "HC3300", CAT_TAP),
+    (r"h[\s.-]?3300", "H3300", CAT_TAP),
+    (r"4\s*n\s*1|4in1|4\s*in\s*1", "4N1 Touch", CAT_TAP),
+    (r"3\s*n\s*1|3in1|3\s*in\s*1", "3N1 Touch", CAT_TAP),
+    (r"hot\s*250|\bh250", "HOT250", CAT_TAP),
+    (r"neo\s*tank", "NeoTank", CAT_TAP),
+]
+_MODEL_NAME_RULES = [(re.compile(p), m, c) for p, m, c in MODEL_NAME_RULES]
+
+# Human-readable spec line per canonical model (shown on the dashboard).
+MODEL_SPECS = {
+    "Evolution Plus 1000 EC": "1,00 HP · 4 stadi di triturazione · motore a induzione",
+    "Evolution Plus 1000 SR": "1,00 HP · 4 stadi · SoundSeal · pulsante pneumatico",
+    "Evolution Plus 750 EC": "0,75 HP · 3 stadi di triturazione · motore a induzione",
+    "Evolution Plus 750 SR": "0,75 HP · 3 stadi · SoundSeal",
+    "Premium 700 EC": "0,75 HP · 2 stadi di triturazione",
+    "Premium 700 SR": "0,75 HP · 2 stadi · SoundSeal",
+    "Premium 550 EC": "0,55 HP · 2 stadi di triturazione",
+    "Premium 550 SR": "0,55 HP · 2 stadi · SoundSeal",
+    "Standard 460": "0,55 HP · entry level · alimentazione continua",
+    "M 46": "Serie M · entry level",
+    "M 56": "Serie M · entry level",
+    "LC-50 Professional": "professionale · uso commerciale leggero",
+    "Evolution Cover Control": "batch feed · avvio a coperchio",
+    "Power 0.75 HP": "0,75 HP · Serie Power",
+    "PRO750": "0,75 HP · Serie Pro",
+    "Badger 5": "0,50 HP · alimentazione continua",
+    "GN1100": "erogatore acqua bollente 98 °C",
+    "HC1100": "erogatore acqua bollente + fredda filtrata",
+    "H3300": "erogatore acqua bollente 98 °C",
+    "HC3300": "erogatore acqua bollente + fredda filtrata",
+    "4N1 Touch": "miscelatore 4-in-1: bollente, fredda, miscelata",
+    "3N1 Touch": "miscelatore 3-in-1 con acqua bollente",
+    "HOT250": "erogatore istantaneo acqua calda",
+    "NeoTank": "serbatoio sottolavello per erogatori",
+    "GN1100 kit NeoTank": "erogatore GN1100 + NeoTank + filtro",
+    "HC1100 kit NeoTank": "erogatore HC1100 + NeoTank + filtro",
+    "H3300 kit NeoTank": "erogatore H3300 + NeoTank + filtro",
+    "HC3300 kit NeoTank": "erogatore HC3300 + NeoTank + filtro",
+}
+
+_ARTICLE_RE = re.compile(r"\b(19\d{5})\b")
+_TAP_HINT_RE = re.compile(r"erogatore|acqua\s+(?:calda|bollente)|dispenser|distributor", re.IGNORECASE)
+
+
+def canonical_model(name: str) -> tuple:
+    """
+    (model, category) for a product name; model is None when the product is
+    InSinkErator-branded but doesn't match any known model (category is then
+    a best guess used to shelve it under "other products").
+    """
+    lower = name.lower()
+    for art in _ARTICLE_RE.findall(lower):
+        if art in ARTICLE_MODELS:
+            return ARTICLE_MODELS[art]
+    for pattern, model, cat in _MODEL_NAME_RULES:
+        if pattern.search(lower):
+            return model, cat
+    if _TAP_HINT_RE.search(lower):
+        return None, CAT_TAP
+    if _DISPOSAL_WORDS.search(lower):
+        return None, CAT_DISPOSER
+    return None, CAT_OTHER
 
 
 def detect_stock_status(card) -> str:
@@ -215,12 +353,26 @@ def _select_first(soup, *selectors):
 
 
 def make_row(site: str, name: str, price_raw: str, url: str, stock_status: str = "unknown") -> Optional[dict]:
-    """Build a result dict; returns None if the price cannot be parsed or the product is an accessory."""
+    """
+    Build a result dict; returns None when the price cannot be parsed, the
+    name isn't InSinkErator-branded (every tracked site is queried for
+    "insinkerator", so unbranded hits are other vendors' products), or the
+    product is an accessory — including unidentifiable items priced below the
+    accessory ceiling (mounting kits, filters, spare parts sold by article
+    number only).
+    """
     price = parse_price(price_raw)
     if price is None or price <= 0:
         return None
+    if "insinkerator" not in name.lower():
+        log.debug("Skipping non-InSinkErator item: %s", name.strip())
+        return None
     if is_accessory(name, price):
         log.debug("Skipping accessory: %s", name.strip())
+        return None
+    model, _cat = canonical_model(name)
+    if model is None and price < _ACCESSORY_PRICE_CEILING:
+        log.debug("Skipping unidentified low-price item (likely accessory): %s", name.strip())
         return None
     return {
         "date": TODAY,
@@ -261,7 +413,7 @@ SHOPIFY_SUGGEST_QUERIES = ("insinkerator", "tritarifiuti insinkerator")
 
 
 def scrape_shopify(domain: str, site: Optional[str] = None,
-                   collections: tuple = ("tritarifiuti",)) -> list[dict]:
+                   collections: tuple = ("tritarifiuti", "insinkerator")) -> list[dict]:
     """
     Generic Shopify store scraper using public JSON endpoints (no HTML parsing):
     - /collections/<handle>/products.json?limit=250&page=N — full product data
@@ -1307,23 +1459,124 @@ def _migrate_csv_add_stock_status() -> None:
 
 
 def save_to_csv(products: list[dict]) -> None:
-    """Append today's rows to prices.csv, migrating schema if needed."""
+    """
+    Save today's rows to prices.csv, migrating schema if needed.
+    Re-runs on the same day replace that day's rows for the sites just
+    scraped (instead of appending duplicates), so multiple runs stay
+    idempotent while other sites' rows are preserved.
+    """
+    scraped_sites = {p["site"] for p in products}
+
     if Path(CSV_FILE).exists():
         with open(CSV_FILE, newline="", encoding="utf-8") as fh:
             reader = csv.DictReader(fh)
             if reader.fieldnames and "stock_status" not in reader.fieldnames:
                 _migrate_csv_add_stock_status()
 
-        with open(CSV_FILE, "a", newline="", encoding="utf-8") as fh:
-            writer = csv.DictWriter(fh, fieldnames=FIELDNAMES)
-            writer.writerows(products)
+        with open(CSV_FILE, newline="", encoding="utf-8") as fh:
+            kept = [
+                row for row in csv.DictReader(fh)
+                if not (row.get("date") == TODAY and row.get("site") in scraped_sites)
+            ]
     else:
-        with open(CSV_FILE, "w", newline="", encoding="utf-8") as fh:
-            writer = csv.DictWriter(fh, fieldnames=FIELDNAMES)
-            writer.writeheader()
-            writer.writerows(products)
+        kept = []
 
-    log.info("Saved %d rows to %s", len(products), CSV_FILE)
+    tmp_path = Path(CSV_FILE + ".tmp")
+    with open(tmp_path, "w", newline="", encoding="utf-8") as fh:
+        writer = csv.DictWriter(fh, fieldnames=FIELDNAMES)
+        writer.writeheader()
+        for row in kept:
+            writer.writerow({f: row.get(f, "") for f in FIELDNAMES})
+        writer.writerows(products)
+    tmp_path.replace(Path(CSV_FILE))
+
+    log.info("Saved %d rows to %s (%d previous rows kept)", len(products), CSV_FILE, len(kept))
+
+
+# ── Dashboard data files ───────────────────────────────────────────────────────
+#
+# index.html renders entirely from repo-relative JSON committed by CI:
+#   latest.json        — today's rows with canonical model/category attached
+#   price_history.json — per model per site, daily minimum price series
+# Both are regenerated on every run (price history is re-derived from
+# prices.csv, so improved canonicalization rules retroactively fix history).
+
+LATEST_FILE = "latest.json"
+PRICE_HISTORY_FILE = "price_history.json"
+
+
+def _dashboard_row(p: dict) -> dict:
+    model, category = canonical_model(p["product_name"])
+    row = dict(p)
+    row["model"] = model
+    row["category"] = category
+    return row
+
+
+def write_latest(products: list[dict]) -> None:
+    """Write today's enriched rows for the dashboard."""
+    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    payload = {
+        "generated": now,
+        "date": TODAY,
+        "specs": MODEL_SPECS,
+        "rows": [_dashboard_row(p) for p in products],
+    }
+    Path(LATEST_FILE).write_text(
+        json.dumps(payload, indent=1, ensure_ascii=False), encoding="utf-8"
+    )
+    log.info("Dashboard data written to %s (%d rows)", LATEST_FILE, len(products))
+
+
+def write_price_history() -> None:
+    """
+    Rebuild price_history.json from prices.csv: for every canonical model,
+    per site, the daily minimum price — compact series for the dashboard's
+    price-trend charts.
+    """
+    if not Path(CSV_FILE).exists():
+        return
+
+    # model -> site -> {date: min price}
+    series: dict = {}
+    with open(CSV_FILE, newline="", encoding="utf-8") as fh:
+        for row in csv.DictReader(fh):
+            name = row.get("product_name", "")
+            if "insinkerator" not in name.lower():
+                continue
+            try:
+                price = float(row["price_eur"])
+            except (KeyError, ValueError):
+                continue
+            if price <= 0 or is_accessory(name, price):
+                continue
+            # a sold-out listing's price is not a real offer
+            if row.get("stock_status") == "out_of_stock":
+                continue
+            model, _cat = canonical_model(name)
+            if model is None:
+                continue
+            day = row.get("date", "")
+            site = row.get("site", "")
+            if not (day and site):
+                continue
+            per_day = series.setdefault(model, {}).setdefault(site, {})
+            if day not in per_day or price < per_day[day]:
+                per_day[day] = price
+
+    payload = {
+        model: {
+            site: sorted(per_day.items())
+            for site, per_day in sites.items()
+        }
+        for model, sites in series.items()
+    }
+    Path(PRICE_HISTORY_FILE).write_text(
+        json.dumps(payload, ensure_ascii=False), encoding="utf-8"
+    )
+    n_points = sum(len(days) for sites in series.values() for days in sites.values())
+    log.info("Price history written to %s (%d models, %d points)",
+             PRICE_HISTORY_FILE, len(series), n_points)
 
 
 # ── Per-site health tracking ───────────────────────────────────────────────────
@@ -1441,6 +1694,11 @@ def update_stock_history(products: list[dict]) -> None:
             })
             changes += 1
         state[key] = new
+
+    # Attach/refresh the canonical model on every record so the dashboard can
+    # group transitions per model without re-deriving names client-side.
+    for rec in history:
+        rec["model"] = canonical_model(rec.get("product_name", ""))[0]
 
     Path(STOCK_STATE_FILE).write_text(
         json.dumps(state, indent=2, ensure_ascii=False, sort_keys=True),
@@ -1647,6 +1905,8 @@ def main() -> None:
     else:
         save_to_csv(all_products)
         update_stock_history(all_products)
+        write_latest(all_products)
+        write_price_history()
         upload_to_sheets(all_products)
 
     update_site_health(run_summary)
