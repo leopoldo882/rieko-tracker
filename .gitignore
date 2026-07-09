@@ -1,6 +1,10 @@
 service_account.json
 *.json
 !requirements*.json
+# scraper data artifacts (read by index.html / needed across CI runs)
+!site_health.json
+!stock_state.json
+!stock_history.json
 .env
 .venv/
 __pycache__/

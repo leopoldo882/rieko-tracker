@@ -23,6 +23,9 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Install Playwright Chromium
+        run: playwright install --with-deps chromium
+
       - name: Run scraper
         env:
           # Store the full JSON content of your service account key as a secret.
@@ -31,11 +34,11 @@ jobs:
           GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
         run: python scraper.py
 
-      - name: Commit updated prices.csv
+      - name: Commit updated data files
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add prices.csv
+          git add prices.csv site_health.json stock_state.json stock_history.json
           # Only commit if there are changes
           git diff --cached --quiet || git commit -m "chore: daily price update $(date -u +%Y-%m-%d)"
           git push

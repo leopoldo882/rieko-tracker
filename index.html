@@ -343,6 +343,109 @@
     .pip-default              { background: var(--c-default); }
     .bar-default              { background: var(--c-default); }
 
+    /* ── DATA HEALTH PANEL ───────────────────────────────────────────────── */
+    .health-panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px 18px;
+      margin-bottom: 24px;
+    }
+    .health-title {
+      font-size: .7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--ink-3);
+      margin-bottom: 10px;
+    }
+    .health-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 10px;
+    }
+    .health-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: .72rem;
+      color: var(--ink-2);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 3px 10px;
+      white-space: nowrap;
+    }
+    .health-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .health-dot.ok      { background: var(--green); }
+    .health-dot.warn    { background: #d97706; }
+    .health-dot.bad     { background: var(--red); }
+    .health-dot.neutral { background: #94a3b8; }
+    .health-chip .meta  { color: var(--ink-3); }
+
+    /* ── STOCK HISTORY ───────────────────────────────────────────────────── */
+    .stock-history {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--border);
+    }
+    .stock-history-title {
+      font-size: .62rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--ink-3);
+      margin-bottom: 6px;
+    }
+    .oos-alert {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: .76rem;
+      font-weight: 600;
+      color: var(--red);
+      background: #fff1f2;
+      border: 1px solid #fecdd3;
+      border-radius: 7px;
+      padding: 6px 10px;
+      margin-bottom: 6px;
+    }
+    .oos-alert .days {
+      margin-left: auto;
+      font-size: .68rem;
+      font-weight: 700;
+      background: rgba(225,29,72,.12);
+      border-radius: 4px;
+      padding: 1px 6px;
+      white-space: nowrap;
+    }
+    .history-line {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: .7rem;
+      color: var(--ink-2);
+      padding: 2px 0;
+    }
+    .history-line .h-date {
+      color: var(--ink-3);
+      width: 52px;
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
+    }
+    .h-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .h-dot.out { background: var(--red); }
+    .h-dot.in  { background: var(--green); }
+
     /* ── FOOTER ──────────────────────────────────────────────────────────── */
     footer {
       text-align: center;
@@ -396,6 +499,10 @@
   </div>
 
   <div id="content" style="display:none">
+    <div class="health-panel" id="health-panel" style="display:none">
+      <div class="health-title">Data health — last successful update per site</div>
+      <div class="health-grid" id="health-grid"></div>
+    </div>
     <div class="legend" id="legend"></div>
     <div class="grid" id="grid"></div>
   </div>
@@ -488,12 +595,22 @@
     return 'default';
   }
 
-  function canonicalModel(rawName) {
+  /* words that identify a real disposal — names like "dissipatore ecologico
+     con tappo salvaposate" are disposals BUNDLED with accessories, and must
+     not be skipped just because an accessory word appears */
+  const DISPOSAL_RE = /dissipatore|tritarifiuti|disposer|evolution|badger|lc[\s-]?50/;
+  const ACCESSORY_PRICE_CEILING = 150;
+
+  function canonicalModel(rawName, price) {
     const n = rawName.toLowerCase();
     /* must be InSinkErator-branded */
     if (!n.includes('insinkerator') && !n.includes('insinkeratore')) return null;
-    /* skip accessories */
-    if (SKIP_WORDS.some(w => n.includes(w))) return null;
+    /* skip accessories — unless the name is a disposal bundle priced like one */
+    if (SKIP_WORDS.some(w => n.includes(w))) {
+      const isBundle = DISPOSAL_RE.test(n) &&
+        (price === undefined || price >= ACCESSORY_PRICE_CEILING);
+      if (!isBundle) return null;
+    }
 
     for (const rule of MODEL_RULES) {
       if (rule.test(n)) return rule.key;
@@ -524,7 +641,7 @@
     const groups = {};
 
     for (const row of rows) {
-      const model = canonicalModel(row.product_name);
+      const model = canonicalModel(row.product_name, row.price_eur);
       if (!model) continue;
 
       if (!groups[model]) groups[model] = {};
@@ -545,6 +662,109 @@
     return result;
   }
 
+  /* ── Data health panel ──────────────────────────────────────────────── */
+
+  const STATUS_KIND = {
+    success: 'ok', retried: 'ok', playwright: 'ok', ok: 'ok',
+    empty: 'neutral', no_shop: 'neutral',
+    blocked: 'bad', failed: 'bad',
+  };
+  const STATUS_LABEL = {
+    success: 'ok', retried: 'ok (retried)', playwright: 'ok (browser)',
+    empty: 'no products', no_shop: 'no shop',
+    blocked: 'blocked', failed: 'failed',
+  };
+
+  function relTime(iso) {
+    if (!iso) return 'never';
+    const ms = Date.now() - new Date(iso).getTime();
+    if (isNaN(ms)) return '?';
+    const mins = Math.round(ms / 60000);
+    if (mins < 60)   return mins + 'm ago';
+    const hrs = Math.round(mins / 60);
+    if (hrs < 48)    return hrs + 'h ago';
+    return Math.round(hrs / 24) + 'd ago';
+  }
+
+  function renderHealth(health) {
+    if (!health || !health.sites) return;
+    const chips = Object.entries(health.sites)
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([site, s]) => {
+        const kind  = STATUS_KIND[s.status] || 'warn';
+        const label = STATUS_LABEL[s.status] || s.status;
+        const meta  = s.product_count > 0
+          ? `${s.product_count} · ${relTime(s.last_success)}`
+          : `${label} · last ok ${relTime(s.last_success)}`;
+        return `<span class="health-chip" title="status: ${label} — last run ${relTime(s.last_run)}">
+          <span class="health-dot ${kind}"></span>${site}<span class="meta">${meta}</span>
+        </span>`;
+      }).join('');
+    document.getElementById('health-grid').innerHTML  = chips;
+    document.getElementById('health-panel').style.display = 'block';
+  }
+
+  /* ── Stock history helpers ──────────────────────────────────────────── */
+
+  let STOCK_HISTORY = [];          /* raw records from stock_history.json */
+
+  function fmtDay(iso) {
+    const d = new Date(iso);
+    return isNaN(d) ? '' : d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
+  }
+
+  function daysSince(iso) {
+    const ms = Date.now() - new Date(iso).getTime();
+    return isNaN(ms) ? null : Math.max(0, Math.floor(ms / 86400000));
+  }
+
+  /* records for one model, newest first */
+  function historyForModel(model) {
+    return STOCK_HISTORY
+      .filter(rec => canonicalModel(rec.product_name) === model)
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  }
+
+  /* most recent transition to out_of_stock for a given site+model */
+  function soldOutSince(records, site) {
+    const rec = records.find(r => r.site === site && r.new_status === 'out_of_stock');
+    return rec ? rec.timestamp : null;
+  }
+
+  function buildStockHistory(records, rows) {
+    const oosRows = rows.filter(r => (r.stock_status || 'unknown') === 'out_of_stock');
+    if (records.length === 0 && oosRows.length === 0) return '';
+
+    /* prominent "sold out since" alerts for currently unavailable items */
+    const alerts = oosRows.map(r => {
+      const since = soldOutSince(records, r.site);
+      const days  = since ? daysSince(since) : null;
+      const sinceTxt = since
+        ? `esaurito dal ${fmtDay(since)}`
+        : 'esaurito (da prima del tracking)';
+      const daysTxt = days !== null
+        ? `<span class="days">${days === 0 ? 'oggi' : days + ' g'}</span>` : '';
+      return `<div class="oos-alert">⛔ ${r.site} — ${sinceTxt}${daysTxt}</div>`;
+    }).join('');
+
+    /* last few transitions (max 4) */
+    const lines = records.slice(0, 4).map(rec => {
+      const out  = rec.new_status === 'out_of_stock';
+      const what = out ? 'esaurito' : 'di nuovo disponibile';
+      return `<div class="history-line">
+        <span class="h-date">${fmtDay(rec.timestamp)}</span>
+        <span class="h-dot ${out ? 'out' : 'in'}"></span>
+        <span>${rec.site} · ${what}</span>
+      </div>`;
+    }).join('');
+
+    if (!alerts && !lines) return '';
+    return `<div class="stock-history">
+      <div class="stock-history-title">Stock history</div>
+      ${alerts}${lines}
+    </div>`;
+  }
+
   /* ── Card builder ───────────────────────────────────────────────────── */
 
   function buildCard(model, rows) {
@@ -560,6 +780,7 @@
       : prices.reduce((a, b) => a + b, 0) / prices.length;
     const spec    = specForModel(model);
     const multi   = rows.length > 1;
+    const records = historyForModel(model);
 
     const rowsHtml = rows.map(r => {
       const sk         = siteKey(r.site);
@@ -569,8 +790,9 @@
       const cheapTag   = (multi && isMin && !isOos)
         ? `<span class="cheap-tag">cheapest</span>`
         : '';
+      const oosSince   = isOos ? soldOutSince(records, r.site) : null;
       const esauritoTag = isOos
-        ? `<span class="esaurito-badge">ESAURITO</span>`
+        ? `<span class="esaurito-badge">ESAURITO${oosSince ? ' dal ' + fmtDay(oosSince) : ''}</span>`
         : '';
       const oosClass   = isOos ? ' out-of-stock' : '';
 
@@ -598,7 +820,7 @@
           <div class="avg-val">${fmtEur(avg)}</div>
         </div>
       </div>
-      <div class="card-body">${rowsHtml}</div>
+      <div class="card-body">${rowsHtml}${buildStockHistory(records, rows)}</div>
     </div>`;
   }
 
@@ -653,6 +875,17 @@
 
   /* ── Fetch ──────────────────────────────────────────────────────────── */
 
+  /* site_health.json + stock_history.json live next to this page in the repo;
+     if they are missing (or we're on file://) the dashboard still works. */
+  function fetchJson(path) {
+    return fetch(path).then(r => (r.ok ? r.json() : null)).catch(() => null);
+  }
+
+  const sideData = Promise.all([
+    fetchJson('site_health.json'),
+    fetchJson('stock_history.json'),
+  ]);
+
   Papa.parse(CSV_URL, {
     download:        true,
     header:          true,
@@ -662,7 +895,11 @@
       const rows = results.data
         .map(r => ({ ...r, price_eur: parseFloat(r.price_eur), stock_status: r.stock_status || 'unknown' }))
         .filter(r => !isNaN(r.price_eur) && r.price_eur > 0);
-      render(rows);
+      sideData.then(([health, history]) => {
+        STOCK_HISTORY = Array.isArray(history) ? history : [];
+        render(rows);
+        renderHealth(health);
+      });
     },
     error(err) {
       document.getElementById('status').style.display = 'none';

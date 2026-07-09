@@ -1,9 +1,12 @@
 """
 InSinkErator Italy Price Tracker
-Scrapes prices from unieuro.it, eprice.it, mediaworld.it, trovaincasso.it,
-pentoleprofessionali.it, leroymerlin.it, bricobravo.com, plumbingshop.it,
-lineadaincasso.it, opportunitycommerce.com, climaconvenienza.it, and amazon.it,
-then saves results to CSV and Google Sheets.
+
+Scrapes prices from Italian retailers via the cheapest reliable channel per
+site — Shopify /products.json + search-suggest JSON, the WooCommerce Store
+API, or HTML parsing — with a one-shot headless-Chromium (Playwright)
+fallback for sites that block plain requests. Results go to prices.csv and
+Google Sheets; per-site health lands in site_health.json and stock-status
+transitions in stock_history.json (read by index.html).
 """
 
 import csv
@@ -13,9 +16,11 @@ import os
 import random
 import re
 import time
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Optional
+
+from urllib.parse import quote
 
 import gspread
 import requests
@@ -44,13 +49,18 @@ USER_AGENTS = [
 # Expected product counts per site — used for the end-of-run warning.
 # Sites not listed here are known SPA/blocked and always return 0.
 TYPICAL_COUNTS = {
-    "trovaincasso.it": 10,
-    "pentoleprofessionali.it": 8,
-    "bricobravo.com": 8,
-    "lineadaincasso.it": 29,
-    "opportunitycommerce.com": 18,
-    "climaconvenienza.it": 8,
-    "amazon.it": 44,
+    "trovaincasso.it": 6,
+    "pentoleprofessionali.it": 5,
+    "bricobravo.com": 4,
+    "lineadaincasso.it": 23,
+    "opportunitycommerce.com": 10,
+    "climaconvenienza.it": 5,
+    "caldaiemurali.it": 5,
+    "tritarifiutidomesticoservice.it": 4,
+    "kelsostore.it": 4,
+    "yeppon.it": 5,
+    "vieffetrade.com": 26,
+    "amazon.it": 35,
 }
 
 BASE_HEADERS = {
@@ -100,6 +110,18 @@ def get(url: str, session: Optional[requests.Session] = None, **kwargs) -> Optio
         return None
 
 
+def get_json(url: str, session: Optional[requests.Session] = None) -> Optional[dict]:
+    """GET a JSON endpoint with shared headers; returns None on any failure."""
+    resp = get(url, session=session)
+    if resp is None:
+        return None
+    try:
+        return resp.json()
+    except ValueError as exc:
+        log.error("Non-JSON response from %s: %s", url, exc)
+        return None
+
+
 def parse_price(raw: str) -> Optional[float]:
     """
     Convert Italian-formatted price strings to float.
@@ -119,8 +141,11 @@ def parse_price(raw: str) -> Optional[float]:
 
 
 _ACCESSORY_WORDS = re.compile(
-    r"\b(tappo|guarnizione|accessori[oa]|ricambio|filtro|flangia|coperchio|kit"
-    r"|splash|stopper|seal|spare\s*part|ricambi|1975)\b",
+    r"\b(tappo|guarnizione|accessor\w*|ricambio|filtro|flangia|coperchio|kit"
+    r"|splash|stopper|seal|spare\s*part|ricambi|1975"
+    r"|copertura|spazzolino|detersivo|paraspruzzi|collarino|adattatore"
+    r"|interruttore|blancocare"
+    r"|\d+\s*pezzi)\b",
     re.IGNORECASE,
 )
 
@@ -132,8 +157,32 @@ _OUT_OF_STOCK_RE = re.compile(
 )
 
 
-def is_accessory(name: str) -> bool:
-    return bool(_ACCESSORY_WORDS.search(name))
+# Words that identify a real disposal unit (not an accessory). Product names
+# like "Dissipatore ecologico con tappo salvaposate" mention accessories that
+# are bundled in — they must NOT be filtered out.
+_DISPOSAL_WORDS = re.compile(
+    r"dissipatore|tritarifiuti|disposer|food\s*waste|evolution|badger"
+    r"|lc[\s-]?50|erogatore",
+    re.IGNORECASE,
+)
+
+# Below this price an item that mentions an accessory word is assumed to BE an
+# accessory even if the name also mentions the disposal it fits.
+_ACCESSORY_PRICE_CEILING = 150.0
+
+
+def is_accessory(name: str, price: Optional[float] = None) -> bool:
+    """
+    True when the name looks like an accessory/spare part.
+    A name that also contains a disposal keyword is treated as a real product
+    (a disposal bundled with accessories) when its price is above the
+    accessory ceiling — or when no price is known.
+    """
+    if not _ACCESSORY_WORDS.search(name):
+        return False
+    if _DISPOSAL_WORDS.search(name):
+        return price is not None and price < _ACCESSORY_PRICE_CEILING
+    return True
 
 
 def detect_stock_status(card) -> str:
@@ -167,11 +216,11 @@ def _select_first(soup, *selectors):
 
 def make_row(site: str, name: str, price_raw: str, url: str, stock_status: str = "unknown") -> Optional[dict]:
     """Build a result dict; returns None if the price cannot be parsed or the product is an accessory."""
-    if is_accessory(name):
-        log.debug("Skipping accessory: %s", name.strip())
-        return None
     price = parse_price(price_raw)
     if price is None or price <= 0:
+        return None
+    if is_accessory(name, price):
+        log.debug("Skipping accessory: %s", name.strip())
         return None
     return {
         "date": TODAY,
@@ -208,22 +257,92 @@ def _scrape_with_retry(fn, site_name: str) -> tuple[list[dict], str]:
 
 # ── Scrapers ───────────────────────────────────────────────────────────────────
 
-def scrape_unieuro() -> list[dict]:
+SHOPIFY_SUGGEST_QUERIES = ("insinkerator", "tritarifiuti insinkerator")
+
+
+def scrape_shopify(domain: str, site: Optional[str] = None,
+                   collections: tuple = ("tritarifiuti",)) -> list[dict]:
     """
-    unieuro.it — search for "insinkerator".
-    The site is an Ionic/Angular SPA; product data is loaded client-side, so
-    static scraping returns 0 results. A headless browser (e.g. Playwright) is
-    required for reliable extraction.
+    Generic Shopify store scraper using public JSON endpoints (no HTML parsing):
+    - /collections/<handle>/products.json?limit=250&page=N — full product data
+      with per-variant "available" flags.
+    - /search/suggest.json — catches InSinkErator items outside the collections.
+    Both are merged and deduplicated by product URL. The "available" field
+    drives stock_status directly (in_stock / out_of_stock).
     """
+    site = site or domain
+    base = f"https://www.{domain}"
+    log.info("Scraping %s (Shopify JSON) …", site)
+
+    by_url: dict[str, dict] = {}
+
+    def add(name: str, price_raw: str, url: str, available: bool) -> None:
+        url = url.split("?")[0]
+        stock = "in_stock" if available else "out_of_stock"
+        row = make_row(site, name, price_raw, url, stock)
+        if row:
+            by_url[url] = row
+
+    # 1) Collection endpoints: complete variant data, paginated
+    for coll in collections:
+        for page in range(1, 11):
+            data = get_json(f"{base}/collections/{coll}/products.json?limit=250&page={page}")
+            if not data:
+                break
+            products = data.get("products", [])
+            if not products:
+                break
+            for p in products:
+                blob = f"{p.get('title', '')} {p.get('vendor', '')}".lower()
+                if "insinkerator" not in blob:
+                    continue
+                variants = p.get("variants") or []
+                prices = [float(v["price"]) for v in variants if v.get("price")]
+                if not prices:
+                    continue
+                available = any(v.get("available") for v in variants)
+                add(p["title"], str(min(prices)), f"{base}/products/{p['handle']}", available)
+            if len(products) < 250:
+                break
+
+    # 2) Search-suggest endpoint: up to 10 hits per query, includes availability
+    for q in SHOPIFY_SUGGEST_QUERIES:
+        data = get_json(
+            f"{base}/search/suggest.json?q={quote(q)}"
+            "&resources[type]=product&resources[limit]=10"
+        )
+        if not data:
+            continue
+        try:
+            products = data["resources"]["results"].get("products", [])
+        except (KeyError, TypeError):
+            continue
+        for p in products:
+            title = p.get("title", "")
+            if "insinkerator" not in f"{title} {p.get('vendor', '')}".lower():
+                continue
+            url = p.get("url", "")
+            if url.startswith("/"):
+                url = base + url
+            price_raw = str(p.get("price", ""))
+            if not price_raw:
+                continue
+            key = url.split("?")[0]
+            if key in by_url:
+                continue
+            add(title, price_raw, url, bool(p.get("available", True)))
+
+    results = list(by_url.values())
+    log.info("  → %d products found", len(results))
+    return results
+
+
+UNIEURO_URL = "https://www.unieuro.it/online/search/?q=insinkerator"
+
+
+def _parse_unieuro(soup) -> list[dict]:
     site = "unieuro.it"
-    url = "https://www.unieuro.it/online/search/?q=insinkerator"
-    log.info("Scraping %s …", site)
-
-    resp = get(url)
-    if resp is None:
-        return []
-
-    soup = BeautifulSoup(resp.text, "html.parser")
+    url = UNIEURO_URL
     results = []
 
     for card in soup.select(
@@ -250,34 +369,35 @@ def scrape_unieuro() -> list[dict]:
         if row:
             results.append(row)
 
+    return results
+
+
+def scrape_unieuro() -> list[dict]:
+    """
+    unieuro.it — search for "insinkerator".
+    The site is an Ionic/Angular SPA; product data is loaded client-side, so
+    static scraping returns 0 results and the Playwright fallback kicks in.
+    """
+    site = "unieuro.it"
+    log.info("Scraping %s …", site)
+
+    resp = get(UNIEURO_URL)
+    if resp is None:
+        return []
+
+    results = _parse_unieuro(BeautifulSoup(resp.text, "html.parser"))
     if not results:
-        log.warning(
-            "unieuro.it returned 0 products — the site is a client-side SPA. "
-            "A headless browser (e.g. Playwright) is required."
-        )
+        log.warning("unieuro.it returned 0 products via requests (client-side SPA).")
     log.info("  → %d products found", len(results))
     return results
 
 
-def scrape_eprice() -> list[dict]:
-    """
-    eprice.it — search for "insinkerator".
-    The site is protected by Akamai bot detection; static requests receive a 403.
-    A headless browser (e.g. Playwright) is required.
-    """
+EPRICE_URL = "https://www.eprice.it/it/s/insinkerator/"
+
+
+def _parse_eprice(soup) -> list[dict]:
     site = "eprice.it"
-    url = "https://www.eprice.it/it/s/insinkerator/"
-    log.info("Scraping %s …", site)
-
-    resp = get(url)
-    if resp is None:
-        log.warning(
-            "eprice.it blocked the request (Akamai). "
-            "A headless browser is required."
-        )
-        return []
-
-    soup = BeautifulSoup(resp.text, "html.parser")
+    url = EPRICE_URL
     results = []
 
     for card in soup.select(
@@ -305,34 +425,36 @@ def scrape_eprice() -> list[dict]:
         if row:
             results.append(row)
 
+    return results
+
+
+def scrape_eprice() -> list[dict]:
+    """
+    eprice.it — search for "insinkerator".
+    The site is protected by Akamai bot detection; static requests receive a
+    403, after which the Playwright fallback kicks in.
+    """
+    site = "eprice.it"
+    log.info("Scraping %s …", site)
+
+    resp = get(EPRICE_URL)
+    if resp is None:
+        log.warning("eprice.it blocked the request (Akamai).")
+        return []
+
+    results = _parse_eprice(BeautifulSoup(resp.text, "html.parser"))
     if not results:
-        log.warning(
-            "eprice.it returned 0 products — likely blocked by Akamai. "
-            "A headless browser is required."
-        )
+        log.warning("eprice.it returned 0 products via requests (Akamai).")
     log.info("  → %d products found", len(results))
     return results
 
 
-def scrape_mediaworld() -> list[dict]:
-    """
-    mediaworld.it — search for "insinkerator".
-    The site is protected by Cloudflare; static requests receive a JS challenge.
-    A headless browser (e.g. Playwright) is required.
-    """
+MEDIAWORLD_URL = "https://www.mediaworld.it/it/search.html?q=insinkerator"
+
+
+def _parse_mediaworld(soup) -> list[dict]:
     site = "mediaworld.it"
-    url = "https://www.mediaworld.it/it/search.html?q=insinkerator"
-    log.info("Scraping %s …", site)
-
-    resp = get(url)
-    if resp is None:
-        log.warning(
-            "mediaworld.it blocked the request (Cloudflare). "
-            "A headless browser is required."
-        )
-        return []
-
-    soup = BeautifulSoup(resp.text, "html.parser")
+    url = MEDIAWORLD_URL
     results = []
 
     for card in soup.select(
@@ -360,33 +482,39 @@ def scrape_mediaworld() -> list[dict]:
         if row:
             results.append(row)
 
+    return results
+
+
+def scrape_mediaworld() -> list[dict]:
+    """
+    mediaworld.it — search for "insinkerator".
+    The site is protected by Cloudflare; static requests receive a JS
+    challenge, after which the Playwright fallback kicks in.
+    """
+    site = "mediaworld.it"
+    log.info("Scraping %s …", site)
+
+    resp = get(MEDIAWORLD_URL)
+    if resp is None:
+        log.warning("mediaworld.it blocked the request (Cloudflare).")
+        return []
+
+    results = _parse_mediaworld(BeautifulSoup(resp.text, "html.parser"))
     if not results:
-        log.warning(
-            "mediaworld.it returned 0 products — likely a Cloudflare JS challenge. "
-            "A headless browser is required."
-        )
+        log.warning("mediaworld.it returned 0 products via requests (Cloudflare).")
     log.info("  → %d products found", len(results))
     return results
 
 
-def scrape_trovaincasso() -> list[dict]:
-    """
-    trovaincasso.it — category page filtered to InSinkErator brand.
-    Cards: article / li.item  Name: a.product-item-link  Price: span.price
-    Fallback card selectors: li.item, .products-list li
-    """
+TROVAINCASSO_URL = (
+    "https://www.trovaincasso.it/elettrodomestici-da-incasso"
+    "/tritarifiuti/brand/insinkerator.html"
+)
+
+
+def _parse_trovaincasso(soup) -> list[dict]:
     site = "trovaincasso.it"
-    url = (
-        "https://www.trovaincasso.it/elettrodomestici-da-incasso"
-        "/tritarifiuti/brand/insinkerator.html"
-    )
-    log.info("Scraping %s …", site)
-
-    resp = get(url)
-    if resp is None:
-        return []
-
-    soup = BeautifulSoup(resp.text, "html.parser")
+    url = TROVAINCASSO_URL
     results = []
 
     cards = _select_first(
@@ -417,26 +545,33 @@ def scrape_trovaincasso() -> list[dict]:
         if row:
             results.append(row)
 
+    return results
+
+
+def scrape_trovaincasso() -> list[dict]:
+    """
+    trovaincasso.it — category page filtered to InSinkErator brand.
+    Cards: article / li.item  Name: a.product-item-link  Price: span.price
+    Fallback card selectors: li.item, .products-list li
+    """
+    site = "trovaincasso.it"
+    log.info("Scraping %s …", site)
+
+    resp = get(TROVAINCASSO_URL)
+    if resp is None:
+        return []
+
+    results = _parse_trovaincasso(BeautifulSoup(resp.text, "html.parser"))
     log.info("  → %d products found", len(results))
     return results
 
 
-def scrape_pentoleprofessionali() -> list[dict]:
-    """
-    pentoleprofessionali.it — Magento brand page for InSinkErator.
-    Items: li.product-item  Name: .product-grid-item__name-link
-    Price: [data-price-type="finalPrice"]  URL: a.product-grid-item__link
-    Fallback card selectors: li.product-grid-item, .products-grid li
-    """
+PENTOLE_URL = "https://www.pentoleprofessionali.it/it/marchi-trattati/insinkerator"
+
+
+def _parse_pentoleprofessionali(soup) -> list[dict]:
     site = "pentoleprofessionali.it"
-    url = "https://www.pentoleprofessionali.it/it/marchi-trattati/insinkerator"
-    log.info("Scraping %s …", site)
-
-    resp = get(url)
-    if resp is None:
-        return []
-
-    soup = BeautifulSoup(resp.text, "html.parser")
+    url = PENTOLE_URL
     results = []
 
     cards = _select_first(
@@ -474,45 +609,34 @@ def scrape_pentoleprofessionali() -> list[dict]:
         if row:
             results.append(row)
 
+    return results
+
+
+def scrape_pentoleprofessionali() -> list[dict]:
+    """
+    pentoleprofessionali.it — Magento brand page for InSinkErator.
+    Items: li.product-item  Name: .product-grid-item__name-link
+    Price: [data-price-type="finalPrice"]  URL: a.product-grid-item__link
+    Fallback card selectors: li.product-grid-item, .products-grid li
+    """
+    site = "pentoleprofessionali.it"
+    log.info("Scraping %s …", site)
+
+    resp = get(PENTOLE_URL)
+    if resp is None:
+        return []
+
+    results = _parse_pentoleprofessionali(BeautifulSoup(resp.text, "html.parser"))
     log.info("  → %d products found", len(results))
     return results
 
 
-def scrape_leroymerlin() -> list[dict]:
-    """
-    leroymerlin.it — search for "insinkerator".
-    The site is protected by DataDome; static requests typically receive a 403.
-    Attempts the scrape anyway and returns results if DataDome lets the request
-    through; logs a warning otherwise.
-    """
+LEROYMERLIN_URL = "https://www.leroymerlin.it/ricerca?q=insinkerator"
+
+
+def _parse_leroymerlin(soup) -> list[dict]:
     site = "leroymerlin.it"
-    url = "https://www.leroymerlin.it/ricerca?q=insinkerator"
-    log.info("Scraping %s …", site)
-
-    session = _make_session()
-    session.headers.update({
-        "Referer": "https://www.google.it/",
-        "Sec-Fetch-Dest": "document",
-        "Sec-Fetch-Mode": "navigate",
-        "Sec-Fetch-Site": "cross-site",
-    })
-
-    resp = get(url, session=session)
-    if resp is None:
-        log.warning(
-            "leroymerlin.it blocked the request (DataDome). "
-            "A headless browser (e.g. Playwright) is required."
-        )
-        return []
-
-    if resp.status_code == 403 or "datadome" in resp.headers.get("server", "").lower():
-        log.warning(
-            "leroymerlin.it: DataDome challenge page returned. "
-            "A headless browser is required for this site."
-        )
-        return []
-
-    soup = BeautifulSoup(resp.text, "html.parser")
+    url = LEROYMERLIN_URL
     results = []
 
     for card in soup.select(
@@ -542,76 +666,45 @@ def scrape_leroymerlin() -> list[dict]:
         if row:
             results.append(row)
 
+    return results
+
+
+def scrape_leroymerlin() -> list[dict]:
+    """
+    leroymerlin.it — search for "insinkerator".
+    The site is protected by DataDome; static requests typically receive a 403.
+    Attempts the scrape anyway; the Playwright fallback kicks in otherwise.
+    """
+    site = "leroymerlin.it"
+    log.info("Scraping %s …", site)
+
+    session = _make_session()
+    session.headers.update({
+        "Referer": "https://www.google.it/",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "cross-site",
+    })
+
+    resp = get(LEROYMERLIN_URL, session=session)
+    if resp is None:
+        log.warning("leroymerlin.it blocked the request (DataDome).")
+        return []
+
+    if resp.status_code == 403 or "datadome" in resp.headers.get("server", "").lower():
+        log.warning("leroymerlin.it: DataDome challenge page returned.")
+        return []
+
+    results = _parse_leroymerlin(BeautifulSoup(resp.text, "html.parser"))
     if not results:
-        log.warning(
-            "leroymerlin.it returned 0 products — likely blocked by DataDome. "
-            "A headless browser (e.g. Playwright) is required."
-        )
+        log.warning("leroymerlin.it returned 0 products via requests (DataDome).")
     log.info("  → %d products found", len(results))
     return results
 
 
 def scrape_bricobravo() -> list[dict]:
-    """
-    bricobravo.com — Shopify-based store; search for "insinkerator".
-    Cards: .product-card  Name: .product-card__title a span
-    Price: .f-price-item--sale / .f-price-item--regular
-    Fallback card selectors: .card-product, [class*='product-item']
-    """
-    site = "bricobravo.com"
-    url = "https://www.bricobravo.com/search?q=insinkerator"
-    log.info("Scraping %s …", site)
-
-    resp = get(url)
-    if resp is None:
-        return []
-
-    soup = BeautifulSoup(resp.text, "html.parser")
-    results = []
-
-    cards = _select_first(
-        soup,
-        ".product-card",
-        ".card-product, [class*='product-card']",
-        "[class*='product-item']",
-    )
-
-    for card in cards:
-        name_tag = card.select_one(".product-card__title a span, .product-card__title a")
-        if not name_tag:
-            name_tag = card.select_one("h3 a, h2 a, [class*='title'] a")
-
-        # Prefer sale price when active, else regular price
-        price_tag = (
-            card.select_one(".f-price__sale .f-price-item--sale")
-            or card.select_one(".f-price-item--regular")
-            or card.select_one("[class*='price']")
-        )
-        link_tag = card.select_one(".product-card__title a[href], a[href]")
-
-        if not (name_tag and price_tag):
-            continue
-
-        price_text = price_tag.get_text(strip=True)
-        if not price_text:
-            alt = card.select_one(".f-price-item--regular")
-            if alt:
-                price_text = alt.get_text(strip=True)
-        if not price_text:
-            continue
-
-        product_url = link_tag["href"] if link_tag and link_tag.get("href") else url
-        if product_url.startswith("/"):
-            product_url = "https://www.bricobravo.com" + product_url
-        product_url = product_url.split("?")[0]
-
-        stock = detect_stock_status(card)
-        row = make_row(site, name_tag.get_text(), price_text, product_url, stock)
-        if row:
-            results.append(row)
-
-    log.info("  → %d products found", len(results))
-    return results
+    """bricobravo.com — Shopify store; scraped via public JSON endpoints."""
+    return scrape_shopify("bricobravo.com")
 
 
 def scrape_plumbingshop() -> list[dict]:
@@ -676,36 +769,7 @@ def scrape_lineadaincasso() -> list[dict]:
     if resp is None:
         return []
 
-    soup = BeautifulSoup(resp.text, "html.parser")
-    results = []
-
-    cards = _select_first(
-        soup,
-        "article.product-miniature",
-        ".js-product-miniature",
-        ".product-miniature, .product-container",
-    )
-
-    for card in cards:
-        name_tag = (
-            card.select_one(".product-title a")
-            or card.select_one("h3 a, h2 a, [class*='product-title'] a")
-        )
-        price_tag = (
-            card.select_one("span.price")
-            or card.select_one("[itemprop='price'], .content_price .price, .price")
-        )
-
-        if not (name_tag and price_tag):
-            continue
-
-        product_url = name_tag.get("href", url)
-
-        stock = detect_stock_status(card)
-        row = make_row(site, name_tag.get_text(), price_tag.get_text(), product_url, stock)
-        if row:
-            results.append(row)
-
+    results = _parse_prestashop_cards(BeautifulSoup(resp.text, "html.parser"), site, url)
     log.info("  → %d products found", len(results))
     return results
 
@@ -725,16 +789,88 @@ def scrape_opportunitycommerce() -> list[dict]:
     if resp is None:
         return []
 
-    soup = BeautifulSoup(resp.text, "html.parser")
-    results = []
+    results = _parse_prestashop_cards(BeautifulSoup(resp.text, "html.parser"), site, url)
+    log.info("  → %d products found", len(results))
+    return results
 
+
+def scrape_climaconvenienza() -> list[dict]:
+    """climaconvenienza.it — Shopify store; scraped via public JSON endpoints."""
+    return scrape_shopify("climaconvenienza.it")
+
+
+def scrape_caldaiemurali() -> list[dict]:
+    """
+    caldaiemurali.it — Shopify store; scraped via public JSON endpoints.
+    NOTE: shares a catalog with climaconvenienza.it (same products/prices),
+    but stocks a few extra InSinkErator models, so both are tracked.
+    """
+    return scrape_shopify("caldaiemurali.it")
+
+
+def scrape_tritarifiutidomesticoservice() -> list[dict]:
+    """
+    tritarifiutidomesticoservice.it — WooCommerce; uses the public Store API
+    (/wp-json/wc/store/v1/products) instead of HTML parsing. Prices come in
+    minor units with an explicit currency_minor_unit; is_in_stock drives
+    stock_status directly.
+    """
+    site = "tritarifiutidomesticoservice.it"
+    url = (
+        "https://tritarifiutidomesticoservice.it/wp-json/wc/store/v1/products"
+        "?search=insinkerator&per_page=100"
+    )
+    log.info("Scraping %s (WooCommerce Store API) …", site)
+
+    data = get_json(url)
+    if not isinstance(data, list):
+        return []
+
+    results = []
+    for p in data:
+        prices = p.get("prices") or {}
+        raw = prices.get("price")
+        if not raw:
+            continue
+        minor_unit = int(prices.get("currency_minor_unit", 2))
+        price = int(raw) / (10 ** minor_unit)
+        stock = "in_stock" if p.get("is_in_stock") else "out_of_stock"
+        row = make_row(site, p.get("name", ""), str(price), p.get("permalink", url), stock)
+        if row:
+            results.append(row)
+
+    log.info("  → %d products found", len(results))
+    return results
+
+
+def scrape_kelsostore() -> list[dict]:
+    """
+    kelsostore.it — PrestaShop; search for "insinkerator".
+    Cards: article.product-miniature  Name: .product-title a
+    Price: [itemprop='price'] / span.price
+    """
+    site = "kelsostore.it"
+    url = "https://kelsostore.it/it/ricerca?controller=search&s=insinkerator"
+    log.info("Scraping %s …", site)
+
+    resp = get(url)
+    if resp is None:
+        return []
+
+    results = _parse_prestashop_cards(BeautifulSoup(resp.text, "html.parser"), site, url)
+    log.info("  → %d products found", len(results))
+    return results
+
+
+def _parse_prestashop_cards(soup, site: str, fallback_url: str) -> list[dict]:
+    """Shared PrestaShop product-miniature parser (kelsostore-style themes)."""
+    results = []
     cards = _select_first(
         soup,
         "article.product-miniature",
         ".js-product-miniature",
         ".product-miniature, .product-container",
     )
-
     for card in cards:
         name_tag = (
             card.select_one(".product-title a")
@@ -744,70 +880,105 @@ def scrape_opportunitycommerce() -> list[dict]:
             card.select_one("[itemprop='price']")
             or card.select_one("span.price, .price")
         )
-        link_tag = card.select_one("a[href]")
-
         if not (name_tag and price_tag):
             continue
 
-        product_url = link_tag["href"] if link_tag and link_tag.get("href") else url
+        product_url = name_tag.get("href") or fallback_url
 
         stock = detect_stock_status(card)
         row = make_row(site, name_tag.get_text(), price_tag.get_text(), product_url, stock)
         if row:
             results.append(row)
 
+    return results
+
+
+MK2SHOP_URL = "https://www.mk2shop.com/it/catalogsearch/result/?q=insinkerator"
+
+
+def _parse_mk2shop(soup) -> list[dict]:
+    """Magento (theme-pearl) search results parser."""
+    site = "mk2shop.com"
+    url = MK2SHOP_URL
+    results = []
+
+    for card in soup.select("li.product-item, .product-item"):
+        name_tag = card.select_one(
+            "a.product-item-link, .product-item-link, [class*='product-name'] a"
+        )
+        price_tag = card.select_one(
+            "[data-price-type='finalPrice'], span.price, .price-box .price"
+        )
+        if not (name_tag and price_tag):
+            continue
+        product_url = name_tag.get("href") or url
+        if product_url.startswith("/"):
+            product_url = "https://www.mk2shop.com" + product_url
+        row = make_row(site, name_tag.get_text(), price_tag.get_text(), product_url,
+                       detect_stock_status(card))
+        if row:
+            results.append(row)
+
+    return results
+
+
+def scrape_mk2shop() -> list[dict]:
+    """
+    mk2shop.com — protected by a Cloudflare managed challenge
+    (cf-mitigated: challenge); static requests receive a 403.
+    Handled by the Playwright fallback when available.
+    """
+    site = "mk2shop.com"
+    log.info("Scraping %s …", site)
+
+    resp = get(MK2SHOP_URL)
+    if resp is None:
+        log.warning("mk2shop.com blocked the request (Cloudflare challenge).")
+        return []
+
+    results = _parse_mk2shop(BeautifulSoup(resp.text, "html.parser"))
     log.info("  → %d products found", len(results))
     return results
 
 
-def scrape_climaconvenienza() -> list[dict]:
+def scrape_official() -> list[dict]:
     """
-    climaconvenienza.it — Shopify; search for "insinkerator".
-    Cards: product-card (custom element)  Name: a.js-prod-link[aria-label]
-    Price: .price__current  URL: a.js-prod-link[href]
-    Fallback card selectors: .product-card, .grid__item
+    insinkerator.com/it-it — the official InSinkErator site. As of 2026-07 the
+    it-it locale redirects to /worldwide/italy, a distributor page pointing to
+    rieko.it (a brochure site with no e-commerce). No prices are published, so
+    this scraper reports 0 products; it stays registered so it activates
+    automatically if an official Italian shop ever appears. Rows (if any) are
+    labelled with site "official".
     """
-    site = "climaconvenienza.it"
-    url = "https://www.climaconvenienza.it/search?q=insinkerator&type=product"
-    log.info("Scraping %s …", site)
+    site = "official"
+    url = "https://www.insinkerator.com/it-it"
+    log.info("Scraping %s (%s) …", site, url)
 
     resp = get(url)
     if resp is None:
         return []
 
+    if "/worldwide" in resp.url or "404" in resp.url:
+        log.info(
+            "  insinkerator.com/it-it redirects to %s — no official Italian "
+            "shop exists; nothing to scrape.", resp.url,
+        )
+        return []
+
+    # A real it-it shop appeared: attempt a generic product-card parse
     soup = BeautifulSoup(resp.text, "html.parser")
     results = []
-
-    cards = _select_first(
-        soup,
-        "product-card",
-        ".product-card, .grid__item",
-        "[class*='card-product'], li.product",
-    )
-
-    for card in cards:
-        name_link = (
-            card.select_one("a.js-prod-link")
-            or card.select_one("a[class*='prod'], a[class*='product']")
-            or card.select_one("h3 a, h2 a")
-        )
-        price_tag = (
-            card.select_one(".price__current")
-            or card.select_one(".price__sale, [class*='price']")
-        )
-
-        if not (name_link and price_tag):
+    for card in soup.select("[class*='product-card'], [class*='product-item'], li.product"):
+        name_tag = card.select_one("h2, h3, [class*='title'], [class*='name']")
+        price_tag = card.select_one("[class*='price']")
+        link_tag = card.select_one("a[href]")
+        if not (name_tag and price_tag):
             continue
-
-        name = name_link.get("aria-label", "") or name_link.get_text(strip=True)
-        price_text = price_tag.get_text(strip=True)
-
-        product_url = name_link.get("href", url)
+        product_url = link_tag["href"] if link_tag and link_tag.get("href") else url
         if product_url.startswith("/"):
-            product_url = "https://www.climaconvenienza.it" + product_url
-
-        stock = detect_stock_status(card)
-        row = make_row(site, name, price_text, product_url, stock)
+            product_url = "https://www.insinkerator.com" + product_url
+        row = make_row(site, name_tag.get_text(), price_tag.get_text(), product_url,
+                       detect_stock_status(card))
         if row:
             results.append(row)
 
@@ -815,21 +986,47 @@ def scrape_climaconvenienza() -> list[dict]:
     return results
 
 
-def scrape_vieffetrade() -> list[dict]:
+VIEFFETRADE_URL = "https://www.vieffetrade.com/catalogsearch/result/?q=insinkerator"
+
+_PRICE_TOKEN_RE = re.compile(r"\d[\d.,]*\s*€")
+
+
+def _last_price(text: str) -> str:
     """
-    vieffetrade.com — Magento 2 SPA; requires JavaScript to render product listings.
-    Static requests receive a JS-required notice; a headless browser is needed.
+    Extract the final (displayed) price from a cell that may contain several,
+    e.g. "554,54 €-29 %393,72 €" → "393,72 €" (the discounted price is last).
     """
+    tokens = _PRICE_TOKEN_RE.findall(text)
+    return tokens[-1] if tokens else text
+
+
+def _parse_vieffetrade(soup) -> list[dict]:
     site = "vieffetrade.com"
-    url = "https://www.vieffetrade.com/catalogsearch/result/?q=insinkerator"
-    log.info("Scraping %s …", site)
-
-    resp = get(url)
-    if resp is None:
-        return []
-
-    soup = BeautifulSoup(resp.text, "html.parser")
+    url = VIEFFETRADE_URL
     results = []
+
+    # Adobe Commerce storefront-search widgets (current), then legacy Magento
+    for card in soup.select("div.ds-sdk-product-item"):
+        name_tag = card.select_one(".ds-sdk-product-item__name")
+        price_tag = card.select_one(".ds-sdk-product-item__price")
+        link_tag = card.find_parent("a") or card.select_one("a[href]")
+
+        if not (name_tag and price_tag):
+            continue
+
+        product_url = (link_tag.get("href") or url) if link_tag else url
+        if product_url.startswith("//"):
+            product_url = "https:" + product_url
+        elif product_url.startswith("/"):
+            product_url = "https://www.vieffetrade.com" + product_url
+
+        row = make_row(site, name_tag.get_text(),
+                       _last_price(price_tag.get_text(" ", strip=True)), product_url)
+        if row:
+            results.append(row)
+
+    if results:
+        return results
 
     for card in soup.select("li.product-item, .product-item"):
         name_tag = card.select_one(
@@ -851,69 +1048,64 @@ def scrape_vieffetrade() -> list[dict]:
         if row:
             results.append(row)
 
+    return results
+
+
+def scrape_vieffetrade() -> list[dict]:
+    """
+    vieffetrade.com — Magento 2 SPA; requires JavaScript to render product
+    listings, so the Playwright fallback handles it.
+    """
+    site = "vieffetrade.com"
+    log.info("Scraping %s …", site)
+
+    resp = get(VIEFFETRADE_URL)
+    if resp is None:
+        return []
+
+    results = _parse_vieffetrade(BeautifulSoup(resp.text, "html.parser"))
     if not results:
-        log.warning(
-            "vieffetrade.com returned 0 products — the site is a Magento 2 SPA. "
-            "A headless browser (e.g. Playwright) is required."
-        )
+        log.warning("vieffetrade.com returned 0 products via requests (Magento 2 SPA).")
     log.info("  → %d products found", len(results))
+    return results
+
+
+YEPPON_URL = "https://www.yeppon.it/search?q=insinkerator"
+
+
+def _parse_yeppon(soup) -> list[dict]:
+    """Shopify theme: div.product-card with the name in a[aria-label]."""
+    site = "yeppon.it"
+    results = []
+
+    for card in soup.select("div.product-card"):
+        link_tag = card.select_one("a[aria-label][href]")
+        price_tag = card.select_one("[class*='price']")
+
+        if not (link_tag and price_tag):
+            continue
+
+        product_url = link_tag["href"].split("?")[0]
+        if product_url.startswith("/"):
+            product_url = "https://www.yeppon.it" + product_url
+
+        row = make_row(site, link_tag["aria-label"],
+                       _last_price(price_tag.get_text(" ", strip=True)),
+                       product_url, detect_stock_status(card))
+        if row:
+            results.append(row)
+
     return results
 
 
 def scrape_yeppon() -> list[dict]:
     """
-    yeppon.it — protected by Cloudflare; static requests receive a 403 challenge.
-    A headless browser (e.g. Playwright) is required.
+    yeppon.it — Shopify store behind Cloudflare. The HTML search page returns
+    a 403 challenge to static requests, but the public Shopify JSON endpoints
+    respond normally, so those are used (the Playwright fallback handles the
+    HTML page if the JSON endpoints ever get blocked too).
     """
-    site = "yeppon.it"
-    url = "https://www.yeppon.it/search?q=insinkerator"
-    log.info("Scraping %s …", site)
-
-    resp = get(url)
-    if resp is None:
-        log.warning(
-            "yeppon.it blocked the request (Cloudflare). "
-            "A headless browser is required."
-        )
-        return []
-
-    if resp.status_code == 403 or "challenge" in resp.text[:500].lower():
-        log.warning(
-            "yeppon.it: Cloudflare challenge page returned. "
-            "A headless browser is required for this site."
-        )
-        return []
-
-    soup = BeautifulSoup(resp.text, "html.parser")
-    results = []
-
-    for card in soup.select(
-        ".product-card, [class*='product-item'], article[class*='product'], li.product"
-    ):
-        name_tag = card.select_one(
-            "h2, h3, [class*='title'], [class*='name'], a[class*='product']"
-        )
-        price_tag = card.select_one("[class*='price'], span.price")
-        link_tag = card.select_one("a[href]")
-
-        if not (name_tag and price_tag):
-            continue
-
-        product_url = link_tag["href"] if link_tag and link_tag.get("href") else url
-        if product_url.startswith("/"):
-            product_url = "https://www.yeppon.it" + product_url
-
-        row = make_row(site, name_tag.get_text(), price_tag.get_text(), product_url)
-        if row:
-            results.append(row)
-
-    if not results:
-        log.warning(
-            "yeppon.it returned 0 products — likely blocked by Cloudflare. "
-            "A headless browser is required."
-        )
-    log.info("  → %d products found", len(results))
-    return results
+    return scrape_shopify("yeppon.it")
 
 
 def scrape_amazon() -> list[dict]:
@@ -980,6 +1172,116 @@ def scrape_amazon() -> list[dict]:
     return results
 
 
+# ── Playwright fallback ────────────────────────────────────────────────────────
+#
+# For any site whose scraper returns 0 products via requests, retry ONCE with
+# headless Chromium (realistic viewport + UA, Italian locale) and re-run the
+# same HTML parser on the rendered page. No CAPTCHA solving, no proxies —
+# if the site still blocks us it is reported as "blocked" and skipped.
+
+PLAYWRIGHT_VIEWPORT = {"width": 1440, "height": 900}
+PLAYWRIGHT_NAV_TIMEOUT_MS = 45_000
+PLAYWRIGHT_SELECTOR_TIMEOUT_MS = 15_000
+
+# site → (url, selector that indicates the product grid rendered, parser)
+PLAYWRIGHT_FALLBACKS: dict[str, tuple] = {
+    "unieuro.it":              (UNIEURO_URL, "[data-product-id], .product-card, [class*='product-item'], [class*='ProductCard']", _parse_unieuro),
+    "eprice.it":               (EPRICE_URL, ".product-item, [class*='product-card'], article.product", _parse_eprice),
+    "mediaworld.it":           (MEDIAWORLD_URL, "[data-testid*='product'], [class*='product-card'], [class*='ProductCard']", _parse_mediaworld),
+    "leroymerlin.it":          (LEROYMERLIN_URL, "[data-test='product-cell'], [class*='product-card'], [class*='ProductCard']", _parse_leroymerlin),
+    "vieffetrade.com":         (VIEFFETRADE_URL, "li.product-item, .product-item", _parse_vieffetrade),
+    "yeppon.it":               (YEPPON_URL, ".product-card, [class*='product-item'], li.product", _parse_yeppon),
+    "mk2shop.com":             (MK2SHOP_URL, "article.product-miniature, [class*='product-'], li.product", _parse_mk2shop),
+    "trovaincasso.it":         (TROVAINCASSO_URL, "article, li.item", _parse_trovaincasso),
+    "pentoleprofessionali.it": (PENTOLE_URL, "li.product-item, li.product-grid-item", _parse_pentoleprofessionali),
+    "lineadaincasso.it":       ("https://www.lineadaincasso.it/cerca?s=insinkerator",
+                                "article.product-miniature, .js-product-miniature",
+                                lambda soup: _parse_prestashop_cards(soup, "lineadaincasso.it", "https://www.lineadaincasso.it/cerca?s=insinkerator")),
+    "opportunitycommerce.com": ("https://www.opportunitycommerce.com/it/ricerca?controller=search&s=insinkerator",
+                                "article.product-miniature, .js-product-miniature",
+                                lambda soup: _parse_prestashop_cards(soup, "opportunitycommerce.com", "https://www.opportunitycommerce.com/it/ricerca?controller=search&s=insinkerator")),
+    "kelsostore.it":           ("https://kelsostore.it/it/ricerca?controller=search&s=insinkerator",
+                                "article.product-miniature, .js-product-miniature",
+                                lambda soup: _parse_prestashop_cards(soup, "kelsostore.it", "https://kelsostore.it/it/ricerca?controller=search&s=insinkerator")),
+}
+
+
+def _render_with_playwright(url: str, wait_selector: str) -> Optional[str]:
+    """Render a page in headless Chromium and return its HTML, or None."""
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        log.warning("Playwright is not installed — skipping browser fallback.")
+        return None
+
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            try:
+                context = browser.new_context(
+                    user_agent=USER_AGENTS[1],
+                    viewport=PLAYWRIGHT_VIEWPORT,
+                    locale="it-IT",
+                    timezone_id="Europe/Rome",
+                )
+                page = context.new_page()
+                page.goto(url, timeout=PLAYWRIGHT_NAV_TIMEOUT_MS,
+                          wait_until="domcontentloaded")
+                try:
+                    page.wait_for_selector(
+                        wait_selector, timeout=PLAYWRIGHT_SELECTOR_TIMEOUT_MS)
+                except Exception:
+                    # Grid never appeared — give client-side JS a last moment,
+                    # then parse whatever rendered.
+                    page.wait_for_timeout(3_000)
+                return page.content()
+            finally:
+                browser.close()
+    except Exception as exc:
+        log.error("Playwright rendering failed for %s: %s", url, exc)
+        return None
+
+
+_BLOCKED_PAGE_RE = re.compile(
+    r"access denied|attention required|just a moment|pardon our interruption"
+    r"|request unsuccessful|verify you are human|non sei un robot|captcha",
+    re.IGNORECASE,
+)
+
+
+def _looks_blocked(soup) -> bool:
+    """Heuristic: rendered page is a bot-challenge / access-denied page."""
+    title = soup.title.get_text(" ", strip=True) if soup.title else ""
+    body = soup.body.get_text(" ", strip=True)[:1500] if soup.body else ""
+    if _BLOCKED_PAGE_RE.search(f"{title} {body}"):
+        return True
+    # An (almost) empty body means the anti-bot layer served a hollow shell
+    return len(body) < 200
+
+
+def _playwright_fallback(site: str) -> tuple[list[dict], bool]:
+    """
+    Retry a 0-product site once via headless Chromium.
+    Returns (results, rendered): rendered=False means the page could not be
+    fetched / was a challenge page (truly blocked), while rendered=True with
+    no results means the site is reachable but lists no matching products.
+    """
+    cfg = PLAYWRIGHT_FALLBACKS.get(site)
+    if not cfg:
+        return [], False
+    url, selector, parser = cfg
+    log.info("  [%s] 0 products via requests — retrying with headless Chromium …", site)
+    html = _render_with_playwright(url, selector)
+    if not html:
+        return [], False
+    soup = BeautifulSoup(html, "html.parser")
+    results = parser(soup)
+    if not results and _looks_blocked(soup):
+        return [], False
+    log.info("  [%s] Playwright fallback → %d products", site, len(results))
+    return results, True
+
+
 # ── Output: CSV ────────────────────────────────────────────────────────────────
 
 FIELDNAMES = ["date", "site", "product_name", "price_eur", "url", "stock_status"]
@@ -1022,6 +1324,134 @@ def save_to_csv(products: list[dict]) -> None:
             writer.writerows(products)
 
     log.info("Saved %d rows to %s", len(products), CSV_FILE)
+
+
+# ── Per-site health tracking ───────────────────────────────────────────────────
+
+SITE_HEALTH_FILE = "site_health.json"
+
+
+def _load_json_file(path: str, default):
+    p = Path(path)
+    if not p.exists():
+        return default
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except (ValueError, OSError) as exc:
+        log.error("Could not read %s (%s) — starting fresh.", path, exc)
+        return default
+
+
+def update_site_health(run_summary: list[dict]) -> None:
+    """
+    Persist per-site health to site_health.json:
+    last_run / last_success timestamps, product count and run status.
+    last_success survives failed runs so the dashboard can show staleness.
+    """
+    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    health = _load_json_file(SITE_HEALTH_FILE, {})
+    sites = health.get("sites", {})
+
+    for row in run_summary:
+        entry = sites.get(row["site"], {})
+        entry["last_run"] = now
+        entry["status"] = row["status"]
+        entry["product_count"] = row["found"]
+        if row["found"] > 0:
+            entry["last_success"] = now
+        sites[row["site"]] = entry
+
+    Path(SITE_HEALTH_FILE).write_text(
+        json.dumps({"last_run": now, "sites": sites}, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    log.info("Site health written to %s", SITE_HEALTH_FILE)
+
+
+# ── Stock-status history ───────────────────────────────────────────────────────
+
+STOCK_STATE_FILE = "stock_state.json"
+STOCK_HISTORY_FILE = "stock_history.json"
+
+
+def _effective_stock(status: str) -> str:
+    """
+    Collapse stock_status to a binary signal for history tracking.
+    A product listed with a price and no out-of-stock marker ('unknown')
+    counts as in stock — that matches how the dashboard treats it.
+    """
+    return "out_of_stock" if status == "out_of_stock" else "in_stock"
+
+
+def _seed_stock_from_csv() -> tuple[dict, list[dict]]:
+    """
+    First run only: reconstruct state + transition history from prices.csv,
+    so the history starts populated instead of empty.
+    """
+    state: dict[str, str] = {}
+    history: list[dict] = []
+    if not Path(CSV_FILE).exists():
+        return state, history
+
+    with open(CSV_FILE, newline="", encoding="utf-8") as fh:
+        for row in csv.DictReader(fh):
+            key = f"{row.get('site', '')}|{row.get('product_name', '')}"
+            new = _effective_stock(row.get("stock_status", "unknown"))
+            old = state.get(key)
+            if old is not None and old != new:
+                history.append({
+                    "product_name": row.get("product_name", ""),
+                    "site": row.get("site", ""),
+                    "old_status": old,
+                    "new_status": new,
+                    "timestamp": f"{row.get('date', '')}T00:00:00+00:00",
+                })
+            state[key] = new
+
+    log.info("Seeded stock state from %s: %d products, %d historical transitions.",
+             CSV_FILE, len(state), len(history))
+    return state, history
+
+
+def update_stock_history(products: list[dict]) -> None:
+    """
+    Compare each product's current stock status to the previous run and append
+    a record to stock_history.json for every in/out-of-stock transition.
+    """
+    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+    if Path(STOCK_STATE_FILE).exists():
+        state = _load_json_file(STOCK_STATE_FILE, {})
+        history = _load_json_file(STOCK_HISTORY_FILE, [])
+    else:
+        state, history = _seed_stock_from_csv()
+
+    changes = 0
+    for p in products:
+        key = f"{p['site']}|{p['product_name']}"
+        new = _effective_stock(p["stock_status"])
+        old = state.get(key)
+        if old is not None and old != new:
+            history.append({
+                "product_name": p["product_name"],
+                "site": p["site"],
+                "old_status": old,
+                "new_status": new,
+                "timestamp": now,
+            })
+            changes += 1
+        state[key] = new
+
+    Path(STOCK_STATE_FILE).write_text(
+        json.dumps(state, indent=2, ensure_ascii=False, sort_keys=True),
+        encoding="utf-8",
+    )
+    Path(STOCK_HISTORY_FILE).write_text(
+        json.dumps(history, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    log.info("Stock history updated: %d transition(s) this run (%d total).",
+             changes, len(history))
 
 
 # ── Output: Google Sheets ──────────────────────────────────────────────────────
@@ -1112,7 +1542,15 @@ def _print_run_summary(summary: list[dict]) -> None:
         if found > 0:
             total_sites += 1
 
-        status_label = {"success": "OK", "retried": "RETRIED", "failed": "FAILED"}.get(status, status)
+        status_label = {
+            "success": "OK",
+            "retried": "RETRIED",
+            "failed": "FAILED",
+            "playwright": "BROWSER",
+            "blocked": "BLOCKED",
+            "empty": "EMPTY",
+            "no_shop": "NO SHOP",
+        }.get(status, status)
 
         note = ""
         if typical:
@@ -1135,6 +1573,10 @@ def _print_run_summary(summary: list[dict]) -> None:
 
 # ── Scraper registry ───────────────────────────────────────────────────────────
 
+# Sites that legitimately have nothing to sell (no e-commerce at all);
+# 0 products there is expected, not a failure.
+NO_SHOP_SITES = {"official"}
+
 # (function, site_name, apply_retry)
 # apply_retry=False for known SPA/bot-blocked sites that always return 0 —
 # retrying them just burns time without any chance of recovery.
@@ -1150,8 +1592,13 @@ SCRAPERS: list[tuple] = [
     (scrape_lineadaincasso,       "lineadaincasso.it",       True),
     (scrape_opportunitycommerce,  "opportunitycommerce.com", True),
     (scrape_climaconvenienza,     "climaconvenienza.it",     True),
+    (scrape_caldaiemurali,        "caldaiemurali.it",        True),
+    (scrape_tritarifiutidomesticoservice, "tritarifiutidomesticoservice.it", True),
+    (scrape_kelsostore,           "kelsostore.it",           True),
+    (scrape_mk2shop,              "mk2shop.com",             False),
+    (scrape_official,             "official",                False),
     (scrape_vieffetrade,          "vieffetrade.com",         False),
-    (scrape_yeppon,               "yeppon.it",               False),
+    (scrape_yeppon,               "yeppon.it",               True),
     (scrape_amazon,               "amazon.it",               True),
 ]
 
@@ -1173,6 +1620,24 @@ def main() -> None:
                 log.error("Unhandled error in %s: %s", fn.__name__, exc)
                 results, status = [], "failed"
 
+        # One headless-Chromium retry for sites that requests couldn't crack
+        if not results and site_name in PLAYWRIGHT_FALLBACKS:
+            try:
+                results, rendered = _playwright_fallback(site_name)
+            except Exception as exc:
+                log.error("  [%s] Playwright fallback raised: %s", site_name, exc)
+                results, rendered = [], False
+            if results:
+                status = "playwright"
+            elif rendered:
+                status = "empty"
+                log.info("  [%s] reachable via browser but no products listed.", site_name)
+            else:
+                status = "blocked"
+                log.warning("  [%s] still blocked after Playwright attempt.", site_name)
+        elif not results and site_name in NO_SHOP_SITES:
+            status = "no_shop"
+
         run_summary.append({"site": site_name, "found": len(results), "status": status})
         all_products.extend(results)
         time.sleep(random.uniform(REQUEST_DELAY_MIN, REQUEST_DELAY_MAX))
@@ -1181,8 +1646,10 @@ def main() -> None:
         log.warning("No products collected — check scraper selectors.")
     else:
         save_to_csv(all_products)
+        update_stock_history(all_products)
         upload_to_sheets(all_products)
 
+    update_site_health(run_summary)
     _print_run_summary(run_summary)
     log.info("Done. Total products collected: %d", len(all_products))
 
