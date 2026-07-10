@@ -1,6 +1,6 @@
 {
- "generated": "2026-07-09T14:33:37+00:00",
- "date": "2026-07-09",
+ "generated": "2026-07-10T10:32:25+00:00",
+ "date": "2026-07-10",
  "specs": {
   "Evolution Plus 1000 EC": "1,00 HP · 4 stadi di triturazione · motore a induzione",
   "Evolution Plus 1000 SR": "1,00 HP · 4 stadi · SoundSeal · pulsante pneumatico",
@@ -33,57 +33,7 @@
  },
  "rows": [
   {
-   "date": "2026-07-09",
-   "site": "trovaincasso.it",
-   "product_name": "Insinkerator 1974550 Dissipatore  EVOLUTION PLUS 550 EC Tecnologia a due fasi - Potenza 0,55 HP",
-   "price_eur": 264.74,
-   "url": "https://www.trovaincasso.it/quickview/index/view/id/27239",
-   "stock_status": "unknown",
-   "model": "Premium 550 EC",
-   "category": "disposer"
-  },
-  {
-   "date": "2026-07-09",
-   "site": "trovaincasso.it",
-   "product_name": "Insinkerator 1974700 Dissipatore  PREMIUM 700 EC. Tecnologia a due fasi Potenza 0,75 HP Con tappo salvaposate",
-   "price_eur": 435.54,
-   "url": "https://www.trovaincasso.it/quickview/index/view/id/27240",
-   "stock_status": "unknown",
-   "model": "Premium 700 EC",
-   "category": "disposer"
-  },
-  {
-   "date": "2026-07-09",
-   "site": "trovaincasso.it",
-   "product_name": "Insinkerator 1974750 Dissipatore ADVANCED EVOLUTION PLUS 750 EC. Tecnologia a tre fasi - Potenza 0,75 HP - Con tappo salvaposate",
-   "price_eur": 656.36,
-   "url": "https://www.trovaincasso.it/quickview/index/view/id/27241",
-   "stock_status": "unknown",
-   "model": "Evolution Plus 750 EC",
-   "category": "disposer"
-  },
-  {
-   "date": "2026-07-09",
-   "site": "trovaincasso.it",
-   "product_name": "Insinkerator 1974100 Dissipatore ADVANCED EVOLUTION PLUS 1000 EC - Tecnologia a 4 fasi - Potenza 1,00 HP  - Con tappo salvaposate",
-   "price_eur": 824.72,
-   "url": "https://www.trovaincasso.it/quickview/index/view/id/27242",
-   "stock_status": "unknown",
-   "model": "Evolution Plus 1000 EC",
-   "category": "disposer"
-  },
-  {
-   "date": "2026-07-09",
-   "site": "trovaincasso.it",
-   "product_name": "Insinkerator ART. 1975078 MODELLO LC-50 PROFESSIONAL Dissipatore ecologico professionale con tappo salvaposate",
-   "price_eur": 1150.46,
-   "url": "https://www.trovaincasso.it/quickview/index/view/id/27243",
-   "stock_status": "unknown",
-   "model": "LC-50 Professional",
-   "category": "disposer"
-  },
-  {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "pentoleprofessionali.it",
    "product_name": "Insinkerator EVOLUTION PLUS 1000 EC (ex modello EVOLUTION 200) - Dissipatore per rifiuti",
    "price_eur": 700.0,
@@ -93,7 +43,7 @@
    "category": "disposer"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "pentoleprofessionali.it",
    "product_name": "Insinkerator Dissipatore per rifiuti mod. EVOLUTION PLUS 750 EC - ex modello EVOLUTION 100",
    "price_eur": 582.0,
@@ -103,7 +53,7 @@
    "category": "disposer"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "pentoleprofessionali.it",
    "product_name": "Insinkerator Dissipatore per rifiuti mod. PREMIUM 700 EC - ex modello ISE66",
    "price_eur": 397.0,
@@ -113,7 +63,7 @@
    "category": "disposer"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "pentoleprofessionali.it",
    "product_name": "Insinkerator Dissipatore per rifiuti mod. PREMIUM 550 EC - ex modello ISE56",
    "price_eur": 236.0,
@@ -123,7 +73,7 @@
    "category": "disposer"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "pentoleprofessionali.it",
    "product_name": "Insinkerator Dissipatore per rifiuti mod. LC 50 PROFESSIONAL con Tappo Salvaposate 1975078",
    "price_eur": 1090.0,
@@ -133,7 +83,7 @@
    "category": "disposer"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "pentoleprofessionali.it",
    "product_name": "Insinkerator Dissipatore per rifiuti mod. Standard 460 SR (ex modello ISE46)",
    "price_eur": 235.0,
@@ -143,7 +93,7 @@
    "category": "disposer"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "bricobravo.com",
    "product_name": "InSinkErator dissipatore Advanced Evolution Plus 1000 SR, 1 HP, SoundSeal, MultiFase 4 fasi, 980 ml, pulsante pneumatico",
    "price_eur": 1168.49,
@@ -153,7 +103,7 @@
    "category": "disposer"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "bricobravo.com",
    "product_name": "Tritarifiuti Alimentari InSinkErator Advanced Evolution Plus 1000 EC",
    "price_eur": 904.05,
@@ -163,7 +113,7 @@
    "category": "disposer"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "bricobravo.com",
    "product_name": "Tritarifiuti Alimentari InSinkErator Power Premium 700 EC",
    "price_eur": 494.46,
@@ -173,7 +123,7 @@
    "category": "disposer"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "bricobravo.com",
    "product_name": "Tritarifiuti Alimentari InSinkErator Power Premium 550 EC",
    "price_eur": 325.95,
@@ -183,7 +133,7 @@
    "category": "disposer"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "lineadaincasso.it",
    "product_name": "Insinkerator 1975556...",
    "price_eur": 775.92,
@@ -193,7 +143,7 @@
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "lineadaincasso.it",
    "product_name": "Insinkerator 1975527...",
    "price_eur": 1032.73,
@@ -203,7 +153,7 @@
    "category": "other"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "lineadaincasso.it",
    "product_name": "Insinkerator 1974550...",
    "price_eur": 225.7,
@@ -213,7 +163,7 @@
    "category": "disposer"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "lineadaincasso.it",
    "product_name": "Insinkerator 1974700...",
    "price_eur": 368.44,
@@ -223,7 +173,7 @@
    "category": "disposer"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "lineadaincasso.it",
    "product_name": "Insinkerator 1974750...",
    "price_eur": 558.76,
@@ -233,7 +183,7 @@
    "category": "disposer"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "lineadaincasso.it",
    "product_name": "Insinkerator 1974100...",
    "price_eur": 695.4,
@@ -243,7 +193,7 @@
    "category": "disposer"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "lineadaincasso.it",
    "product_name": "Insinkerator 1975520  GN...",
    "price_eur": 333.67,
@@ -253,7 +203,7 @@
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "lineadaincasso.it",
    "product_name": "Insinkerator 1975541 GN...",
    "price_eur": 524.6,
@@ -263,7 +213,7 @@
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "lineadaincasso.it",
    "product_name": "Insinkerator 1975518 HC...",
    "price_eur": 446.52,
@@ -273,7 +223,7 @@
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "lineadaincasso.it",
    "product_name": "Insinkerator 1975542 HC...",
    "price_eur": 762.5,
@@ -283,7 +233,7 @@
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "lineadaincasso.it",
    "product_name": "Insinkerator 1975522 H 3300...",
    "price_eur": 453.84,
@@ -293,7 +243,7 @@
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "lineadaincasso.it",
    "product_name": "Insinkerator 1975543 H 3300...",
    "price_eur": 539.85,
@@ -303,7 +253,7 @@
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "lineadaincasso.it",
    "product_name": "Insinkerator 1975532 H 3300...",
    "price_eur": 667.95,
@@ -313,7 +263,7 @@
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "lineadaincasso.it",
    "product_name": "Insinkerator 1975521 HC...",
    "price_eur": 664.9,
@@ -323,7 +273,7 @@
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "lineadaincasso.it",
    "product_name": "Insinkerator 1975544 HC...",
    "price_eur": 742.98,
@@ -333,7 +283,7 @@
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "lineadaincasso.it",
    "product_name": "Insinkerator 1975545 HC...",
    "price_eur": 864.37,
@@ -343,7 +293,7 @@
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "lineadaincasso.it",
    "product_name": "Insinkerator 1975557 - 4in1...",
    "price_eur": 1399.95,
@@ -353,7 +303,7 @@
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "opportunitycommerce.com",
    "product_name": "Insinkerator Erogatore di acqua bollente e fredda HC3300 1975521 finitura cromato",
    "price_eur": 706.01,
@@ -363,7 +313,7 @@
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "opportunitycommerce.com",
    "product_name": "Insinkerator Erogatore di acqua bollente H3300 1975522 finitura cromato",
    "price_eur": 501.63,
@@ -373,7 +323,7 @@
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "opportunitycommerce.com",
    "product_name": "Insinkerator Erogatore di acqua bollente e fredda HC1100 1975518 finitura cromato",
    "price_eur": 517.12,
@@ -383,7 +333,7 @@
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "opportunitycommerce.com",
    "product_name": "Insinkerator Erogatore di acqua bollente GN1100 1975520 finitura cromato",
    "price_eur": 383.97,
@@ -393,7 +343,7 @@
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "opportunitycommerce.com",
    "product_name": "PRONTA CONSEGNA - Insinkerator IN Dissipatore ecologico con tappo salvaposate 1974100 - Evolution Plus 1000 EC",
    "price_eur": 819.41,
@@ -403,7 +353,7 @@
    "category": "disposer"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "opportunitycommerce.com",
    "product_name": "PRONTA CONSEGNA - Insinkerator IN Dissipatore ecologico con tappo salvaposate 1974750 - Evolution Plus 750 EC",
    "price_eur": 700.0,
@@ -413,7 +363,7 @@
    "category": "disposer"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "opportunitycommerce.com",
    "product_name": "PRONTA CONSEGNA - Insinkerator IN Dissipatore ecologico con tappo salvaposate 1974700 - Premium 700 EC",
    "price_eur": 486.49,
@@ -423,7 +373,7 @@
    "category": "disposer"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "opportunitycommerce.com",
    "product_name": "PRONTA CONSEGNA - Insinkerator IN Dissipatore ecologico con tappo salvaposate 1974550 - Premium 550 EC",
    "price_eur": 324.53,
@@ -433,7 +383,7 @@
    "category": "disposer"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "opportunitycommerce.com",
    "product_name": "Insinkerator Elemento riscaldante 1975556",
    "price_eur": 857.01,
@@ -443,7 +393,7 @@
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "climaconvenienza.it",
    "product_name": "Tritarifiuti Alimentari InSinkErator Power Premium 700 EC",
    "price_eur": 406.35,
@@ -453,7 +403,7 @@
    "category": "disposer"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "climaconvenienza.it",
    "product_name": "Tritarifiuti Alimentari InSinkErator Power Premium 550 EC",
    "price_eur": 262.5,
@@ -463,7 +413,7 @@
    "category": "disposer"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "climaconvenienza.it",
    "product_name": "Tritarifiuti Alimentari InSinkErator Advanced Evolution Plus 1000 EC",
    "price_eur": 756.0,
@@ -473,7 +423,7 @@
    "category": "disposer"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "climaconvenienza.it",
    "product_name": "Tritarifiuti Alimentari InSinkErator serie M Modello 56",
    "price_eur": 229.95,
@@ -483,7 +433,7 @@
    "category": "disposer"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "climaconvenienza.it",
    "product_name": "Dissipatore di rifiuti alimentari Tritarifiuti InSinkErator Serie M Mod. 46",
    "price_eur": 162.75,
@@ -493,97 +443,7 @@
    "category": "disposer"
   },
   {
-   "date": "2026-07-09",
-   "site": "caldaiemurali.it",
-   "product_name": "Tritarifiuti Alimentari InSinkErator Power Premium 700 EC",
-   "price_eur": 406.35,
-   "url": "https://www.caldaiemurali.it/products/insinkerator-dissipatore-di-rifiuti-alimentari-insinkerator-power-premium-700-ec",
-   "stock_status": "in_stock",
-   "model": "Premium 700 EC",
-   "category": "disposer"
-  },
-  {
-   "date": "2026-07-09",
-   "site": "caldaiemurali.it",
-   "product_name": "Tritarifiuti Alimentari InSinkErator Power Premium 550 EC",
-   "price_eur": 262.5,
-   "url": "https://www.caldaiemurali.it/products/insinkerator-dissipatore-di-rifiuti-alimentari-insinkerator-power-premium-550-ec",
-   "stock_status": "in_stock",
-   "model": "Premium 550 EC",
-   "category": "disposer"
-  },
-  {
-   "date": "2026-07-09",
-   "site": "caldaiemurali.it",
-   "product_name": "Tritarifiuti Alimentari InSinkErator Advanced Evolution Plus 1000 EC",
-   "price_eur": 756.0,
-   "url": "https://www.caldaiemurali.it/products/insinkerator-dissipatore-di-rifiuti-alimentari-insinkerator-advanced-evolution-plus-1000-ec",
-   "stock_status": "in_stock",
-   "model": "Evolution Plus 1000 EC",
-   "category": "disposer"
-  },
-  {
-   "date": "2026-07-09",
-   "site": "caldaiemurali.it",
-   "product_name": "Dissipatore di rifiuti alimentari Tritarifiuti InSinkErator Serie M Mod. 46",
-   "price_eur": 162.75,
-   "url": "https://www.caldaiemurali.it/products/in-sink-erator-dissipatore-di-rifiuti-alimentari-tritarifiuti-insinkerator-serie-m-mod-46",
-   "stock_status": "out_of_stock",
-   "model": "M 46",
-   "category": "disposer"
-  },
-  {
-   "date": "2026-07-09",
-   "site": "caldaiemurali.it",
-   "product_name": "Tritarifiuti Alimentari InSinkErator serie M Modello 56",
-   "price_eur": 229.95,
-   "url": "https://www.caldaiemurali.it/products/in-sink-erator-dissipatore-di-rifiuti-alimentari-tritarifiuti-insinkerator-serie-m-mod-56",
-   "stock_status": "out_of_stock",
-   "model": "M 56",
-   "category": "disposer"
-  },
-  {
-   "date": "2026-07-09",
-   "site": "tritarifiutidomesticoservice.it",
-   "product_name": "Tritarifiuti InsinKerator Evolution Plus 1000 EC",
-   "price_eur": 765.0,
-   "url": "https://tritarifiutidomesticoservice.it/shop/tritarifiuti-insinkerator-evolution-plus-1000-ec/",
-   "stock_status": "in_stock",
-   "model": "Evolution Plus 1000 EC",
-   "category": "disposer"
-  },
-  {
-   "date": "2026-07-09",
-   "site": "tritarifiutidomesticoservice.it",
-   "product_name": "Tritarifiuti InsinKerator Evolution Plus 750 EC",
-   "price_eur": 635.0,
-   "url": "https://tritarifiutidomesticoservice.it/shop/tritarifiuti-insinkerator-evolution-750-ec/",
-   "stock_status": "in_stock",
-   "model": "Evolution Plus 750 EC",
-   "category": "disposer"
-  },
-  {
-   "date": "2026-07-09",
-   "site": "tritarifiutidomesticoservice.it",
-   "product_name": "Tritarifiuti InsinKerator Premium 700 EC",
-   "price_eur": 485.0,
-   "url": "https://tritarifiutidomesticoservice.it/shop/tritarifiuti-insinkerator-premium-700-ec/",
-   "stock_status": "in_stock",
-   "model": "Premium 700 EC",
-   "category": "disposer"
-  },
-  {
-   "date": "2026-07-09",
-   "site": "tritarifiutidomesticoservice.it",
-   "product_name": "Tritarifiuti InsinKerator Premium 550 EC",
-   "price_eur": 295.0,
-   "url": "https://tritarifiutidomesticoservice.it/shop/tritarifiuti-insinkerator-premium-550-ec/",
-   "stock_status": "in_stock",
-   "model": "Premium 550 EC",
-   "category": "disposer"
-  },
-  {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "kelsostore.it",
    "product_name": "Insinkerator hc1100 Erogatore acqua bollente e temperatura ambiente cromo",
    "price_eur": 1497.3,
@@ -593,7 +453,7 @@
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "kelsostore.it",
    "product_name": "Insinkerator gn1100 Erogatore acqua bollente istantanea cromo",
    "price_eur": 1366.2,
@@ -603,7 +463,7 @@
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "kelsostore.it",
    "product_name": "Insinkerator lc-50 professional dissipatore ecologico sotto lavello + tappo...",
    "price_eur": 1179.9,
@@ -613,7 +473,7 @@
    "category": "disposer"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "kelsostore.it",
    "product_name": "Insinkerator Evolution 200 dissipatore ecologico sotto lavello + tappo...",
    "price_eur": 1069.5,
@@ -623,187 +483,187 @@
    "category": "disposer"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "vieffetrade.com",
    "product_name": "Insinkerator ART. 1975520 GN1100",
-   "price_eur": 393.72,
+   "price_eur": 363.44,
    "url": "https://www.vieffetrade.com/it_it/insinkerator-art-1975520-gn1100-erogatore-acqua-bollente-istantanea-elemento-riscaldante-non-incluso-cromo-105001.html",
    "stock_status": "unknown",
    "model": "GN1100",
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "vieffetrade.com",
    "product_name": "Insinkerator ART. 1975518 HC1100",
-   "price_eur": 514.88,
+   "price_eur": 475.27,
    "url": "https://www.vieffetrade.com/it_it/insinkerator-art-1975518-hc1100-erogatore-acqua-bollente-e-fredda-istantanea-cromato-elemento-riscaldante-non-incluso-105002.html",
    "stock_status": "unknown",
    "model": "HC1100",
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "vieffetrade.com",
    "product_name": "Insinkerator ART. 1975522 H3300",
-   "price_eur": 514.88,
+   "price_eur": 475.27,
    "url": "https://www.vieffetrade.com/it_it/insinkerator-art-1975522-h3300-erogatore-acqua-bollente-istantanea-elemento-riscaldante-non-incluso-cromo-105003.html",
    "stock_status": "unknown",
    "model": "H3300",
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "vieffetrade.com",
    "product_name": "Insinkerator ART. 1975521 HC3300",
-   "price_eur": 723.85,
+   "price_eur": 668.17,
    "url": "https://www.vieffetrade.com/it_it/insinkerator-art-1975521-hc3300-erogatore-acqua-bollente-e-fredda-istantanea-elemento-riscaldante-non-incluso-cromo-105004.html",
    "stock_status": "unknown",
    "model": "HC3300",
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "vieffetrade.com",
    "product_name": "Insinkerator 1975532 mod. H3300",
-   "price_eur": 745.04,
+   "price_eur": 687.73,
    "url": "https://www.vieffetrade.com/it_it/insinkerator-1975532-mod-h3300-erogatore-acqua-bollente-istantanea-elemento-riscaldante-non-incluso-effetto-inox-562109.html",
    "stock_status": "unknown",
    "model": "H3300 kit NeoTank",
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "vieffetrade.com",
    "product_name": "Insinkerator 1975541 MOD. GN1100",
-   "price_eur": 602.71,
+   "price_eur": 556.35,
    "url": "https://www.vieffetrade.com/it_it/insinkerator-1975541-mod-gn1100-erogatore-acqua-bollente-istantanea-elemento-riscaldante-non-incluso-effetto-inox-562112.html",
    "stock_status": "unknown",
    "model": "GN1100 kit NeoTank",
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "vieffetrade.com",
    "product_name": "Insinkerator 1975542 MOD. HC1100",
-   "price_eur": 814.71,
+   "price_eur": 752.04,
    "url": "https://www.vieffetrade.com/it_it/insinkerator-1975542-mod-hc1100-erogatore-acqua-bollente-e-fredda-istantanea-elemento-riscaldante-non-incluso-effetto-inox-562113.html",
    "stock_status": "unknown",
    "model": "HC1100 kit NeoTank",
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "vieffetrade.com",
    "product_name": "Insinkerator 1975545 MOD. HC3300",
-   "price_eur": 954.03,
+   "price_eur": 880.64,
    "url": "https://www.vieffetrade.com/it_it/insinkerator-1975545-mod-hc3300-erogatore-acqua-bollente-e-fredda-istantanea-elemento-riscaldante-non-incluso-effetto-inox-562156.html",
    "stock_status": "unknown",
    "model": "HC3300 kit NeoTank",
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "vieffetrade.com",
    "product_name": "Insinkerator MOD. 4N1 TOUCH L-SHAPE",
-   "price_eur": 1284.15,
+   "price_eur": 1185.37,
    "url": "https://www.vieffetrade.com/it_it/insinkerator-mod-4n1-touch-l-shape-miscelatore-acqua-bollente-e-fredda-istantanea-elemento-riscaldante-refrigerante-non-incluso-cromo-562160.html",
    "stock_status": "unknown",
    "model": "4N1 Touch",
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "vieffetrade.com",
    "product_name": "Insinkerator MOD.4N1 TOUCH L-SHAPE",
-   "price_eur": 1514.33,
+   "price_eur": 1397.84,
    "url": "https://www.vieffetrade.com/it_it/insinkerator-mod-4n1-touch-l-shape-miscelatore-acqua-bollente-e-fredda-istantanea-elemento-riscaldante-refrigerante-non-incluso-inox-562170.html",
    "stock_status": "unknown",
    "model": "4N1 Touch",
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "vieffetrade.com",
    "product_name": "Insinkerator 4N1 TOUCH J-SHAPE",
-   "price_eur": 1284.15,
+   "price_eur": 1185.37,
    "url": "https://www.vieffetrade.com/it_it/insinkerator-4n1-touch-j-shape-miscelatore-acqua-bollente-e-fredda-istantanea-elemento-riscaldante-refrigerante-non-incluso-cromo-562172.html",
    "stock_status": "unknown",
    "model": "4N1 Touch",
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "vieffetrade.com",
    "product_name": "Insinkerator 4N1 TOUCH J-SHAPE",
-   "price_eur": 1514.33,
+   "price_eur": 1397.84,
    "url": "https://www.vieffetrade.com/it_it/insinkerator-4n1-touch-j-shape-miscelatore-acqua-bollente-e-fredda-istantanea-elemento-riscaldante-refrigerante-non-incluso-inox-562173.html",
    "stock_status": "unknown",
    "model": "4N1 Touch",
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "vieffetrade.com",
    "product_name": "Insinkerator 4N1 TOUCH U-SHAPE",
-   "price_eur": 1284.15,
+   "price_eur": 1185.37,
    "url": "https://www.vieffetrade.com/it_it/insinkerator-4n1-touch-u-shape-miscelatore-acqua-bollente-e-fredda-istantanea-elemento-riscaldante-refrigerante-non-incluso-cromo-562175.html",
    "stock_status": "unknown",
    "model": "4N1 Touch",
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "vieffetrade.com",
    "product_name": "Insinkerator 4N1 TOUCH U-SHAPE",
-   "price_eur": 1514.33,
+   "price_eur": 1397.84,
    "url": "https://www.vieffetrade.com/it_it/insinkerator-4n1-touch-u-shape-miscelatore-acqua-bollente-e-fredda-istantanea-elemento-riscaldante-refrigerante-non-incluso-inox-562176.html",
    "stock_status": "unknown",
    "model": "4N1 Touch",
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "vieffetrade.com",
    "product_name": "Insinkerator NEO TANK",
-   "price_eur": 866.19,
+   "price_eur": 799.56,
    "url": "https://www.vieffetrade.com/it_it/insinkerator-neo-tank-elemento-riscaldante-per-erogatori-2-5-litri-562178.html",
    "stock_status": "unknown",
    "model": "NeoTank",
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "vieffetrade.com",
    "product_name": "Insinkerator MOD.4N1 TOUCH L-SHAPE",
-   "price_eur": 1514.33,
+   "price_eur": 1397.84,
    "url": "https://www.vieffetrade.com/it_it/insinkerator-mod-4n1-touch-l-shape-miscelatore-acqua-bollente-e-fredda-istantanea-elemento-riscaldante-refrigerante-non-incluso-velvet-black-562192.html",
    "stock_status": "unknown",
    "model": "4N1 Touch",
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "vieffetrade.com",
    "product_name": "Insinkerator 4N1 TOUCH U-SHAPE",
-   "price_eur": 1514.33,
+   "price_eur": 1397.84,
    "url": "https://www.vieffetrade.com/it_it/insinkerator-4n1-touch-u-shape-miscelatore-acqua-bollente-e-fredda-istantanea-elemento-riscaldante-refrigerante-non-incluso-velvet-black-562197.html",
    "stock_status": "unknown",
    "model": "4N1 Touch",
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "vieffetrade.com",
    "product_name": "Insinkerator MOD. 4N1 TOUCH J-SHAPE",
-   "price_eur": 1514.33,
+   "price_eur": 1397.84,
    "url": "https://www.vieffetrade.com/it_it/insinkerator-mod-4n1-touch-j-shape-miscelatore-acqua-bollente-e-fredda-istantanea-elemento-riscaldante-refrigerante-non-incluso-velvet-black-562199.html",
    "stock_status": "unknown",
    "model": "4N1 Touch",
    "category": "tap"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "vieffetrade.com",
    "product_name": "Insinkerator EVOLUTION PLUS 1000 EC",
    "price_eur": 762.05,
@@ -813,7 +673,7 @@
    "category": "disposer"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "vieffetrade.com",
    "product_name": "Insinkerator PREMIUM 550 EC",
    "price_eur": 244.17,
@@ -823,7 +683,7 @@
    "category": "disposer"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "vieffetrade.com",
    "product_name": "Insinkerator PREMIUM 700 EC",
    "price_eur": 397.79,
@@ -833,193 +693,13 @@
    "category": "disposer"
   },
   {
-   "date": "2026-07-09",
+   "date": "2026-07-10",
    "site": "vieffetrade.com",
    "product_name": "Insinkerator EVOLUTION PLUS 750 EC",
    "price_eur": 614.56,
    "url": "https://www.vieffetrade.com/it_it/insinkerator-evolution-plus-750-ec-dissipatore-ecologico-con-tappo-salvaposate-0-75-hp-579328.html",
    "stock_status": "unknown",
    "model": "Evolution Plus 750 EC",
-   "category": "disposer"
-  },
-  {
-   "date": "2026-07-09",
-   "site": "yeppon.it",
-   "product_name": "Insinkerator Evolution Plus 750 Sr tritarifiuti",
-   "price_eur": 713.99,
-   "url": "https://www.yeppon.it/products/insinkerator-evolution-plus-750-1297959",
-   "stock_status": "in_stock",
-   "model": "Evolution Plus 750 SR",
-   "category": "disposer"
-  },
-  {
-   "date": "2026-07-09",
-   "site": "yeppon.it",
-   "product_name": "Insinkerator 460SR Tritarifiuti",
-   "price_eur": 224.99,
-   "url": "https://www.yeppon.it/products/insinkerator-460sr-tritarifiuti-1298440",
-   "stock_status": "in_stock",
-   "model": "Standard 460",
-   "category": "disposer"
-  },
-  {
-   "date": "2026-07-09",
-   "site": "yeppon.it",
-   "product_name": "Insinkerator Premium 550 EC Dissipatore rifiuti 0.55 HP",
-   "price_eur": 264.99,
-   "url": "https://www.yeppon.it/products/insinkerator-premium-550-ec-1297958",
-   "stock_status": "in_stock",
-   "model": "Premium 550 EC",
-   "category": "disposer"
-  },
-  {
-   "date": "2026-07-09",
-   "site": "yeppon.it",
-   "product_name": "Insinkerator Premium 700 EC Dissipatore per Rifiuti con Tappo Salvaposate",
-   "price_eur": 442.99,
-   "url": "https://www.yeppon.it/products/insinkerator-premium-700-ec-1298439",
-   "stock_status": "in_stock",
-   "model": "Premium 700 EC",
-   "category": "disposer"
-  },
-  {
-   "date": "2026-07-09",
-   "site": "yeppon.it",
-   "product_name": "InSinkErator dissipatore Advanced Evolution Plus 1000 SR, 1 HP, SoundSeal, MultiFase 4 fasi, 980 ml, pulsante pneumatico",
-   "price_eur": 955.99,
-   "url": "https://www.yeppon.it/products/insinkerator-1000-sr-dissipatore-1334177",
-   "stock_status": "in_stock",
-   "model": "Evolution Plus 1000 SR",
-   "category": "disposer"
-  },
-  {
-   "date": "2026-07-09",
-   "site": "amazon.it",
-   "product_name": "Insinkerator Evolution Plus 1000 EC - Tritatutto da cucina con motore a induzione da 1 CV con interruttore dell'aria",
-   "price_eur": 799.0,
-   "url": "https://www.amazon.it/dp/B00CWY2T2E",
-   "stock_status": "unknown",
-   "model": "Evolution Plus 1000 EC",
-   "category": "disposer"
-  },
-  {
-   "date": "2026-07-09",
-   "site": "amazon.it",
-   "product_name": "Insinkerator Premium 550 EC - Tritatutto per rifiuti da cucina con motore a induzione da 0,5 CV e interruttore dell'aria",
-   "price_eur": 352.0,
-   "url": "https://www.amazon.it/dp/B00CWY2KFA",
-   "stock_status": "unknown",
-   "model": "Premium 550 EC",
-   "category": "disposer"
-  },
-  {
-   "date": "2026-07-09",
-   "site": "amazon.it",
-   "product_name": "Insinkerator Premium 700 EC - Tritatutto per rifiuti da cucina con motore a induzione da 0,75 CV e interruttore dell'aria",
-   "price_eur": 519.0,
-   "url": "https://www.amazon.it/dp/B00CWY2M3A",
-   "stock_status": "unknown",
-   "model": "Premium 700 EC",
-   "category": "disposer"
-  },
-  {
-   "date": "2026-07-09",
-   "site": "amazon.it",
-   "product_name": "InSinkErator Eliminatore di rifiuti da cucina Evolution Plus 1000 SR Waste Disposer Trituratore di rifiuti",
-   "price_eur": 1049.9,
-   "url": "https://www.amazon.it/dp/B00CWXP7AQ",
-   "stock_status": "unknown",
-   "model": "Evolution Plus 1000 SR",
-   "category": "disposer"
-  },
-  {
-   "date": "2026-07-09",
-   "site": "amazon.it",
-   "product_name": "Insinkerator Evolution Plus 750 EC - Tritatutto da cucina con motore a induzione da 0,75 CV con interruttore dell'aria",
-   "price_eur": 660.0,
-   "url": "https://www.amazon.it/dp/B00CWY2RDU",
-   "stock_status": "unknown",
-   "model": "Evolution Plus 750 EC",
-   "category": "disposer"
-  },
-  {
-   "date": "2026-07-09",
-   "site": "amazon.it",
-   "product_name": "InSinkErator Standard 460",
-   "price_eur": 345.0,
-   "url": "https://www.amazon.it/dp/B00CWY2DJ8",
-   "stock_status": "unknown",
-   "model": "Standard 460",
-   "category": "disposer"
-  },
-  {
-   "date": "2026-07-09",
-   "site": "amazon.it",
-   "product_name": "InSinkErator Eliminatore di rifiuti da cucina Evolution Plus 750 SR Waste Disposer Trituratore di rifiuti",
-   "price_eur": 885.11,
-   "url": "https://www.amazon.it/dp/B00CWXP08K",
-   "stock_status": "unknown",
-   "model": "Evolution Plus 750 SR",
-   "category": "disposer"
-  },
-  {
-   "date": "2026-07-09",
-   "site": "amazon.it",
-   "product_name": "InSinkErator Power 0.75HP Smaltimento rifiuti, Nero",
-   "price_eur": 394.02,
-   "url": "https://www.amazon.it/dp/B0CDMD4S1B",
-   "stock_status": "unknown",
-   "model": "Power 0.75 HP",
-   "category": "disposer"
-  },
-  {
-   "date": "2026-07-09",
-   "site": "amazon.it",
-   "product_name": "InSinkErator Sistema di smaltimento dei rifiuti Alimentari, Acciaio Inossidabile, Rosso, 31,1 x 22 x 31,1 cm",
-   "price_eur": 530.41,
-   "url": "https://www.amazon.it/dp/B0B3NB7M4P",
-   "stock_status": "unknown",
-   "model": null,
-   "category": "disposer"
-  },
-  {
-   "date": "2026-07-09",
-   "site": "amazon.it",
-   "product_name": "InSinkErator unità di smaltimento rifiuti Modello S60 con Interruttore dell'Aria - unità di smaltimento rifiuti Alimentari per Uso lavello w/Manuale di Istruzioni - Accessori e Gadget per lavello da",
-   "price_eur": 344.92,
-   "url": "https://www.amazon.it/dp/B08463TN63",
-   "stock_status": "unknown",
-   "model": null,
-   "category": "disposer"
-  },
-  {
-   "date": "2026-07-09",
-   "site": "amazon.it",
-   "product_name": "InSinkErator 45394AU-ISE InSinkErator 45394-ISE Distributori di acqua calda e fredda moderni",
-   "price_eur": 680.21,
-   "url": "https://www.amazon.it/dp/B097YSSLBW",
-   "stock_status": "unknown",
-   "model": null,
-   "category": "tap"
-  },
-  {
-   "date": "2026-07-09",
-   "site": "amazon.it",
-   "product_name": "InSinkErator FH3020MBLK InSinkErator FH3020 Showroom Collection Distributore di acqua calda",
-   "price_eur": 557.94,
-   "url": "https://www.amazon.it/dp/B097YZF3YY",
-   "stock_status": "unknown",
-   "model": null,
-   "category": "tap"
-  },
-  {
-   "date": "2026-07-09",
-   "site": "amazon.it",
-   "product_name": "InSinkErator EVO CVR CNTRL Smaltimento dei rifiuti, Grigio",
-   "price_eur": 910.16,
-   "url": "https://www.amazon.it/dp/B0CDMGPTPL",
-   "stock_status": "unknown",
-   "model": "Evolution Cover Control",
    "category": "disposer"
   }
  ]
