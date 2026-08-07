@@ -1,109 +1,109 @@
 {
-  "last_run": "2026-08-06T09:48:09+00:00",
+  "last_run": "2026-08-07T08:23:08+00:00",
   "sites": {
     "unieuro.it": {
-      "last_run": "2026-08-06T09:48:09+00:00",
+      "last_run": "2026-08-07T08:23:08+00:00",
       "status": "empty",
       "product_count": 0
     },
     "eprice.it": {
-      "last_run": "2026-08-06T09:48:09+00:00",
+      "last_run": "2026-08-07T08:23:08+00:00",
       "status": "blocked",
       "product_count": 0
     },
     "mediaworld.it": {
-      "last_run": "2026-08-06T09:48:09+00:00",
+      "last_run": "2026-08-07T08:23:08+00:00",
       "status": "empty",
       "product_count": 0
     },
     "trovaincasso.it": {
-      "last_run": "2026-08-06T09:48:09+00:00",
+      "last_run": "2026-08-07T08:23:08+00:00",
       "status": "empty",
       "product_count": 0,
       "last_success": "2026-07-09T14:33:41+00:00"
     },
     "pentoleprofessionali.it": {
-      "last_run": "2026-08-06T09:48:09+00:00",
+      "last_run": "2026-08-07T08:23:08+00:00",
       "status": "success",
       "product_count": 6,
-      "last_success": "2026-08-06T09:48:09+00:00"
+      "last_success": "2026-08-07T08:23:08+00:00"
     },
     "leroymerlin.it": {
-      "last_run": "2026-08-06T09:48:09+00:00",
+      "last_run": "2026-08-07T08:23:08+00:00",
       "status": "blocked",
       "product_count": 0
     },
     "bricobravo.com": {
-      "last_run": "2026-08-06T09:48:09+00:00",
+      "last_run": "2026-08-07T08:23:08+00:00",
       "status": "success",
       "product_count": 3,
-      "last_success": "2026-08-06T09:48:09+00:00"
+      "last_success": "2026-08-07T08:23:08+00:00"
     },
     "plumbingshop.it": {
-      "last_run": "2026-08-06T09:48:09+00:00",
+      "last_run": "2026-08-07T08:23:08+00:00",
       "status": "failed",
       "product_count": 0
     },
     "lineadaincasso.it": {
-      "last_run": "2026-08-06T09:48:09+00:00",
+      "last_run": "2026-08-07T08:23:08+00:00",
       "status": "success",
       "product_count": 17,
-      "last_success": "2026-08-06T09:48:09+00:00"
+      "last_success": "2026-08-07T08:23:08+00:00"
     },
     "opportunitycommerce.com": {
-      "last_run": "2026-08-06T09:48:09+00:00",
+      "last_run": "2026-08-07T08:23:08+00:00",
       "status": "success",
       "product_count": 9,
-      "last_success": "2026-08-06T09:48:09+00:00"
+      "last_success": "2026-08-07T08:23:08+00:00"
     },
     "climaconvenienza.it": {
-      "last_run": "2026-08-06T09:48:09+00:00",
+      "last_run": "2026-08-07T08:23:08+00:00",
       "status": "success",
       "product_count": 5,
-      "last_success": "2026-08-06T09:48:09+00:00"
+      "last_success": "2026-08-07T08:23:08+00:00"
     },
     "caldaiemurali.it": {
-      "last_run": "2026-08-06T09:48:09+00:00",
+      "last_run": "2026-08-07T08:23:08+00:00",
       "status": "failed",
       "product_count": 0,
       "last_success": "2026-07-09T14:33:41+00:00"
     },
     "tritarifiutidomesticoservice.it": {
-      "last_run": "2026-08-06T09:48:09+00:00",
+      "last_run": "2026-08-07T08:23:08+00:00",
       "status": "success",
       "product_count": 4,
-      "last_success": "2026-08-06T09:48:09+00:00"
+      "last_success": "2026-08-07T08:23:08+00:00"
     },
     "kelsostore.it": {
-      "last_run": "2026-08-06T09:48:09+00:00",
+      "last_run": "2026-08-07T08:23:08+00:00",
       "status": "success",
       "product_count": 4,
-      "last_success": "2026-08-06T09:48:09+00:00"
+      "last_success": "2026-08-07T08:23:08+00:00"
     },
     "mk2shop.com": {
-      "last_run": "2026-08-06T09:48:09+00:00",
+      "last_run": "2026-08-07T08:23:08+00:00",
       "status": "empty",
       "product_count": 0
     },
     "official": {
-      "last_run": "2026-08-06T09:48:09+00:00",
+      "last_run": "2026-08-07T08:23:08+00:00",
       "status": "no_shop",
       "product_count": 0
     },
     "vieffetrade.com": {
-      "last_run": "2026-08-06T09:48:09+00:00",
+      "last_run": "2026-08-07T08:23:08+00:00",
       "status": "playwright",
       "product_count": 22,
-      "last_success": "2026-08-06T09:48:09+00:00"
+      "last_success": "2026-08-07T08:23:08+00:00"
     },
     "yeppon.it": {
-      "last_run": "2026-08-06T09:48:09+00:00",
+      "last_run": "2026-08-07T08:23:08+00:00",
       "status": "empty",
       "product_count": 0,
       "last_success": "2026-07-09T14:33:41+00:00"
     },
     "amazon.it": {
-      "last_run": "2026-08-06T09:48:09+00:00",
+      "last_run": "2026-08-07T08:23:08+00:00",
       "status": "failed",
       "product_count": 0,
       "last_success": "2026-08-03T10:54:26+00:00"
