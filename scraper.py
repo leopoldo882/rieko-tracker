@@ -24,6 +24,7 @@ from urllib.parse import quote
 
 import gspread
 import requests
+import urllib3
 from bs4 import BeautifulSoup
 from google.oauth2.service_account import Credentials
 
@@ -352,7 +353,8 @@ def _select_first(soup, *selectors):
     return []
 
 
-def make_row(site: str, name: str, price_raw: str, url: str, stock_status: str = "unknown") -> Optional[dict]:
+def make_row(site: str, name: str, price_raw: str, url: str, stock_status: str = "unknown",
+             seller: Optional[str] = None) -> Optional[dict]:
     """
     Build a result dict; returns None when the price cannot be parsed, the
     name isn't InSinkErator-branded (every tracked site is queried for
@@ -360,6 +362,11 @@ def make_row(site: str, name: str, price_raw: str, url: str, stock_status: str =
     product is an accessory — including unidentifiable items priced below the
     accessory ceiling (mounting kits, filters, spare parts sold by article
     number only).
+
+    `seller` is the merchant fulfilling the listing. For direct-retailer shops
+    it defaults to the site itself; on marketplaces (amazon.it) the caller
+    passes the merchant read from the product page, or "unknown" when it can't
+    be determined.
     """
     price = parse_price(price_raw)
     if price is None or price <= 0:
@@ -381,6 +388,7 @@ def make_row(site: str, name: str, price_raw: str, url: str, stock_status: str =
         "price_eur": price,
         "url": url,
         "stock_status": stock_status,
+        "seller": seller or site,
     }
 
 
@@ -906,22 +914,60 @@ def scrape_plumbingshop() -> list[dict]:
     return results
 
 
+LINEADAINCASSO_URL = "https://www.lineadaincasso.it/cerca?s=insinkerator"
+
+
+def _fetch_lineadaincasso(session: requests.Session) -> Optional[requests.Response]:
+    """
+    Fetch lineadaincasso.it, tolerating its intermittently-misconfigured TLS.
+
+    The origin sits behind more than one backend, and some of them serve a
+    certificate valid only for the apex domain (its SAN lists lineadaincasso.it
+    but not www.lineadaincasso.it). When a request lands on such a backend,
+    verifying the canonical www host fails with a hostname mismatch — the cause
+    of most of this site's "0 products" days. Following the apex URL doesn't
+    help: it 302-redirects straight back to www. So we retry the same request
+    with certificate verification disabled, which is acceptable here because we
+    only read public product HTML and send no credentials. A generous connect
+    timeout also rides out the occasional slow SYN/ACK from datacenter IPs.
+    """
+    try:
+        resp = session.get(LINEADAINCASSO_URL, timeout=(20, 25))
+        resp.raise_for_status()
+        return resp
+    except requests.exceptions.SSLError as exc:
+        log.warning("  [lineadaincasso.it] TLS verification failed (%s) — "
+                    "retrying without verification.", exc)
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        try:
+            resp = session.get(LINEADAINCASSO_URL, timeout=(20, 25), verify=False)
+            resp.raise_for_status()
+            return resp
+        except requests.RequestException as exc2:
+            log.error("  [lineadaincasso.it] unverified retry failed: %s", exc2)
+            return None
+    except requests.RequestException as exc:
+        log.error("Failed to fetch %s: %s", LINEADAINCASSO_URL, exc)
+        return None
+
+
 def scrape_lineadaincasso() -> list[dict]:
     """
     lineadaincasso.it — PrestaShop; search for "insinkerator".
     Cards: article.product-miniature  Name: .product-title a
     Price: span.price  URL: .product-title a[href]
     Fallback card selectors: .js-product-miniature, .product-miniature
+    Uses _fetch_lineadaincasso to survive the site's intermittent TLS misconfig.
     """
     site = "lineadaincasso.it"
-    url = "https://www.lineadaincasso.it/cerca?s=insinkerator"
     log.info("Scraping %s …", site)
 
-    resp = get(url)
+    resp = _fetch_lineadaincasso(_make_session())
     if resp is None:
         return []
 
-    results = _parse_prestashop_cards(BeautifulSoup(resp.text, "html.parser"), site, url)
+    results = _parse_prestashop_cards(
+        BeautifulSoup(resp.text, "html.parser"), site, LINEADAINCASSO_URL)
     log.info("  → %d products found", len(results))
     return results
 
@@ -1260,10 +1306,87 @@ def scrape_yeppon() -> list[dict]:
     return scrape_shopify("yeppon.it")
 
 
+# "Venduto da …" labels across Amazon locales (the merchant-info / buy-box row).
+_AMZ_SELLER_LABEL_RE = re.compile(r"vendut|sold\s+by|vendu\s+par|vendido\s+por", re.IGNORECASE)
+
+
+# Extract the merchant from an Amazon #merchant-info blurb. The lead-in is the
+# "sold by" phrase (IT/EN/ES/FR); capture stops before the shipping clause so a
+# name that contains dots (e.g. "Elettro Shop S.r.l.") isn't cut short.
+_SELLER_TEXT_RE = re.compile(
+    r"(?:vendut[oi](?:\s+e\s+spedit\w+)?|sold(?:\s+and\s+shipped)?\s+by"
+    r"|vendido\s+por|vendu\s+par)\s+(?:da\s+|por\s+|par\s+)?(.+?)"
+    r"(?:\s+e\s+spedit|\s+e\s+consegnat|\s+and\s+(?:shipped|fulfilled)|$)",
+    re.IGNORECASE,
+)
+
+
+def _seller_from_merchant_text(text: str) -> Optional[str]:
+    """
+    Pull the merchant name out of an Amazon #merchant-info blurb, e.g.
+    "Venduto da RIEKO e spedito da Amazon" → "RIEKO",
+    "Venduto e spedito da Amazon" / "Spedizione e vendita Amazon" → "Amazon".
+    """
+    if not text:
+        return None
+    m = _SELLER_TEXT_RE.search(text)
+    if m:
+        seller = m.group(1).strip(" .,")
+        if seller:
+            return seller
+    if re.search(r"\bamazon\b", text, re.IGNORECASE):
+        return "Amazon"
+    return None
+
+
+def _amazon_seller(session: requests.Session, product_url: str) -> str:
+    """
+    Fetch an Amazon product page and return the buy-box merchant ("Venduto da"
+    / sold-by field: #sellerProfileTriggerId or #merchant-info), or "unknown"
+    when it can't be determined (page blocked, Amazon-fulfilled with no named
+    third party, or markup we don't recognise).
+    """
+    try:
+        resp = session.get(product_url, timeout=20)
+        resp.raise_for_status()
+    except requests.RequestException as exc:
+        log.debug("  amazon seller lookup failed for %s: %s", product_url, exc)
+        return "unknown"
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+
+    # 1) Third-party seller link in the buy box (the seller's store name)
+    link = soup.select_one("#sellerProfileTriggerId")
+    if link:
+        name = link.get_text(strip=True)
+        if name:
+            return name
+
+    # 2) #merchant-info free text ("Venduto da X e spedito da Amazon")
+    mi = soup.select_one("#merchant-info")
+    if mi:
+        seller = _seller_from_merchant_text(mi.get_text(" ", strip=True))
+        if seller:
+            return seller
+
+    # 3) Tabular buy box: the row explicitly labelled "Venduto da"
+    for offscreen in soup.select("#tabular-buybox .tabular-buybox-text"):
+        label = offscreen.get("class", [])
+        text = offscreen.get_text(" ", strip=True)
+        if text and _AMZ_SELLER_LABEL_RE.search(" ".join(label) + " " + text):
+            seller = _seller_from_merchant_text(text) or text
+            if seller and not _AMZ_SELLER_LABEL_RE.fullmatch(seller):
+                return seller
+
+    return "unknown"
+
+
 def scrape_amazon() -> list[dict]:
     """
     amazon.it — search results for "insinkerator tritarifiuti".
-    Amazon's search results render server-side for the first page.
+    Amazon's search results render server-side for the first page; for each
+    matching listing we then fetch its product page to read the buy-box
+    merchant ("Venduto da …") into the seller column.
     """
     site = "amazon.it"
     url = "https://www.amazon.it/s?k=insinkerator+tritarifiuti"
@@ -1318,7 +1441,10 @@ def scrape_amazon() -> list[dict]:
         stock = detect_stock_status(item)
         row = make_row(site, name_tag.get_text(), price_raw, product_url, stock)
         if row:
+            # Only pay for a product-page fetch on listings we're keeping.
+            row["seller"] = _amazon_seller(session, product_url)
             results.append(row)
+            time.sleep(random.uniform(1.0, 2.0))
 
     log.info("  → %d products found", len(results))
     return results
@@ -1346,9 +1472,9 @@ PLAYWRIGHT_FALLBACKS: dict[str, tuple] = {
     "mk2shop.com":             (MK2SHOP_URL, "article.product-miniature, [class*='product-'], li.product", _parse_mk2shop),
     "trovaincasso.it":         (TROVAINCASSO_URL, "article, li.item", _parse_trovaincasso),
     "pentoleprofessionali.it": (PENTOLE_URL, "li.product-item, li.product-grid-item", _parse_pentoleprofessionali),
-    "lineadaincasso.it":       ("https://www.lineadaincasso.it/cerca?s=insinkerator",
+    "lineadaincasso.it":       (LINEADAINCASSO_URL,
                                 "article.product-miniature, .js-product-miniature",
-                                lambda soup: _parse_prestashop_cards(soup, "lineadaincasso.it", "https://www.lineadaincasso.it/cerca?s=insinkerator")),
+                                lambda soup: _parse_prestashop_cards(soup, "lineadaincasso.it", LINEADAINCASSO_URL)),
     "opportunitycommerce.com": ("https://www.opportunitycommerce.com/it/ricerca?controller=search&s=insinkerator",
                                 "article.product-miniature, .js-product-miniature",
                                 lambda soup: _parse_prestashop_cards(soup, "opportunitycommerce.com", "https://www.opportunitycommerce.com/it/ricerca?controller=search&s=insinkerator")),
@@ -1375,6 +1501,10 @@ def _render_with_playwright(url: str, wait_selector: str) -> Optional[str]:
                     viewport=PLAYWRIGHT_VIEWPORT,
                     locale="it-IT",
                     timezone_id="Europe/Rome",
+                    # Some origins (e.g. lineadaincasso.it) intermittently serve
+                    # a certificate that doesn't cover the www host; without this
+                    # the browser fallback dies on ERR_CERT_COMMON_NAME_INVALID.
+                    ignore_https_errors=True,
                 )
                 page = context.new_page()
                 page.goto(url, timeout=PLAYWRIGHT_NAV_TIMEOUT_MS,
@@ -1436,12 +1566,18 @@ def _playwright_fallback(site: str) -> tuple[list[dict], bool]:
 
 # ── Output: CSV ────────────────────────────────────────────────────────────────
 
-FIELDNAMES = ["date", "site", "product_name", "price_eur", "url", "stock_status"]
+FIELDNAMES = ["date", "site", "product_name", "price_eur", "url", "stock_status", "seller"]
+
+# Default value written into historical rows for columns added after the fact.
+# Both are "unknown" because the data was never captured for older listings.
+_CSV_COLUMN_DEFAULTS = {"stock_status": "unknown", "seller": "unknown"}
 
 
-def _migrate_csv_add_stock_status() -> None:
-    """Add stock_status column (defaulting to 'unknown') to an existing CSV."""
-    log.info("Migrating %s to add stock_status column…", CSV_FILE)
+def _migrate_csv_schema(missing: list[str]) -> None:
+    """Rewrite an existing CSV to add any FIELDNAMES columns it lacks, filling
+    historical rows with the column's default (an added column was never
+    recorded for old rows, so it reads 'unknown')."""
+    log.info("Migrating %s to add column(s): %s", CSV_FILE, ", ".join(missing))
     old_path = Path(CSV_FILE)
     tmp_path = Path(CSV_FILE + ".tmp")
 
@@ -1451,7 +1587,8 @@ def _migrate_csv_add_stock_status() -> None:
         writer = csv.DictWriter(fout, fieldnames=FIELDNAMES)
         writer.writeheader()
         for row in reader:
-            row.setdefault("stock_status", "unknown")
+            for col in missing:
+                row.setdefault(col, _CSV_COLUMN_DEFAULTS.get(col, ""))
             writer.writerow({f: row.get(f, "") for f in FIELDNAMES})
 
     tmp_path.replace(old_path)
@@ -1469,9 +1606,10 @@ def save_to_csv(products: list[dict]) -> None:
 
     if Path(CSV_FILE).exists():
         with open(CSV_FILE, newline="", encoding="utf-8") as fh:
-            reader = csv.DictReader(fh)
-            if reader.fieldnames and "stock_status" not in reader.fieldnames:
-                _migrate_csv_add_stock_status()
+            existing_fields = csv.DictReader(fh).fieldnames or []
+        missing = [c for c in FIELDNAMES if c not in existing_fields]
+        if existing_fields and missing:
+            _migrate_csv_schema(missing)
 
         with open(CSV_FILE, newline="", encoding="utf-8") as fh:
             kept = [
@@ -1758,7 +1896,9 @@ def upload_to_sheets(products: list[dict]) -> None:
         log.error("Could not open Google Sheet %s: %s", SHEET_ID, exc)
         return
 
-    rows_as_lists = [list(p.values()) for p in products]
+    # Align to FIELDNAMES (not dict insertion order) so every column — including
+    # the seller added later — lands in the right place on both tabs.
+    rows_as_lists = [[p.get(f, "") for f in FIELDNAMES] for p in products]
 
     # ── Raw Data tab: append ──────────────────────────────────────────────────
     raw_ws = _get_or_create_worksheet(spreadsheet, "Raw Data")

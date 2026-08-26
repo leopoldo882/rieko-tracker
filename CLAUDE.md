@@ -59,7 +59,7 @@ secrets; locally it defaults to empty, so local runs only write files).
 
 | file | purpose |
 |---|---|
-| `prices.csv` | one row per listing per day: date, site, product_name, price_eur, url, stock_status. Same-day re-runs REPLACE that day's rows for the scraped sites (idempotent), not append |
+| `prices.csv` | one row per listing per day: date, site, product_name, price_eur, url, stock_status, seller. Same-day re-runs REPLACE that day's rows for the scraped sites (idempotent), not append. `seller` = the fulfilling merchant: the site itself for direct shops, the buy-box merchant for amazon.it, `unknown` when undeterminable. New columns are back-filled into old rows as `unknown` by `_migrate_csv_schema` (triggered when a `FIELDNAMES` column is missing) |
 | `latest.json` | today's rows + `model`/`category` + `MODEL_SPECS` — the dashboard's primary data |
 | `price_history.json` | per model → per site → [[date, min price], …]; REBUILT from prices.csv every run (rule improvements retroactively fix history); excludes out-of-stock listings |
 | `site_health.json` | per-site last_run / last_success / product_count / status — the "data health" panel |
@@ -100,7 +100,20 @@ above. Whitelist any new JSON artifact there AND in the workflow's
   `ds-sdk-product-item` widgets; price cells contain old+discount+final price,
   `_last_price()` takes the final one.
 - **lineadaincasso.it**: card titles are truncated ("Insinkerator 1975556…") —
-  article numbers carry the model mapping.
+  article numbers carry the model mapping. Its origin has multiple backends and
+  some intermittently serve an apex-only TLS cert (missing the `www` SAN),
+  which used to fail cert verification and produce "0 products / blocked" days.
+  `_fetch_lineadaincasso` retries the same request with `verify=False` on an
+  `SSLError` (public HTML, no credentials sent), and the Playwright context
+  sets `ignore_https_errors=True`, so both paths survive the bad cert. A
+  separate rarer failure mode is a TCP connect timeout (SYN drop from the Azure
+  runner IP) — network-level, not code-fixable without a proxy; the wider
+  connect timeout helps only the slow-accept variant.
+- **amazon.it seller**: after the search-results parse, each kept listing's
+  product page is fetched to read the buy-box merchant — `#sellerProfileTriggerId`
+  (third-party store link) → `#merchant-info`/`#tabular-buybox` "Venduto da …"
+  text via `_seller_from_merchant_text` → `unknown`. Only kept (branded,
+  non-accessory) listings are fetched, throttled ~1–2 s apart.
 - **unieuro.it / eprice.it / leroymerlin.it**: hard-blocked (SPA-404 / Akamai /
   DataDome) even via Playwright → status "blocked".
 - **mediaworld.it / mk2shop.com**: reachable, but currently list no
@@ -120,4 +133,13 @@ above. Whitelist any new JSON artifact there AND in the workflow's
   time by the brand check in `make_row` (typical branded count ~13).
 - Product dicts must keep exactly the `FIELDNAMES` keys (csv.DictWriter and
   the Sheets upload both break on extras) — `model`/`category` are attached
-  only at JSON-write time (`_dashboard_row`).
+  only at JSON-write time (`_dashboard_row`). `upload_to_sheets` serialises
+  rows as `[p.get(f) for f in FIELDNAMES]` (not `p.values()`) so column order
+  survives regardless of dict insertion order.
+- The Google Sheet "Raw Data" tab is APPEND-ONLY and written only when
+  `GOOGLE_SHEET_ID` is set (CI only), so it can diverge from `prices.csv`:
+  local runs and idempotent same-day replaces touch the CSV but not the Sheet,
+  and a failed/late CI Sheets-upload step (while the CSV commit still ran) can
+  leave a day in the CSV but not the Sheet. The CSV is the source of truth; the
+  Sheet is a best-effort append log spanning old scraper versions (no header,
+  retired sites, duplicate days). See git history for the reconciliation.

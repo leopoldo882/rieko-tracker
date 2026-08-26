@@ -258,9 +258,17 @@
     .price-row { display: flex; align-items: center; gap: 9px; padding: 6px 0; }
     .price-row + .price-row { border-top: 1px solid var(--grid); }
     .site-pip { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .site-stack {
+      width: 152px; flex-shrink: 0; min-width: 0;
+      display: flex; flex-direction: column; gap: 1px;
+    }
     .site-label {
-      font-size: .75rem; color: var(--ink-2); width: 152px; flex-shrink: 0;
+      font-size: .75rem; color: var(--ink-2);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500;
+    }
+    .seller-label {
+      font-size: .62rem; color: var(--ink-3); font-weight: 500;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .bar-track { flex: 1; height: 8px; background: var(--page); border-radius: 4px; overflow: hidden; }
     .bar-fill { height: 100%; border-radius: 0 4px 4px 0; min-width: 4px; transition: width .5s cubic-bezier(.4,0,.2,1); }
@@ -350,7 +358,7 @@
       header { padding: 0 16px; gap: 12px; }
       main   { padding: 20px 12px 40px; }
       .grid  { grid-template-columns: 1fr; }
-      .site-label { width: 104px; }
+      .site-stack { width: 104px; }
     }
     @media (max-width: 560px) {
       .grid { grid-template-columns: 1fr; }
@@ -678,9 +686,15 @@
       const outTag = isOut
         ? `<span class="tag tag-out">⛔ Esaurito${since ? ' dal ' + esc(fmtDay(since)) : ''}</span>` : '';
       const bestTag = isBest ? `<span class="tag tag-best">✓ migliore</span>` : '';
+      const seller = r.seller && r.seller !== r.site
+        ? `<span class="seller-label" title="Venduto da ${esc(r.seller)}">Venduto da ${r.seller === 'unknown' ? 'sconosciuto' : esc(r.seller)}</span>`
+        : '';
       return `<div class="price-row${isOut ? ' out-of-stock' : ''}">
         <span class="site-pip ${siteClass(r.site)}"></span>
-        <span class="site-label" title="${esc(r.product_name)}">${esc(r.site)}</span>
+        <span class="site-stack">
+          <span class="site-label" title="${esc(r.product_name)}">${esc(r.site)}</span>
+          ${seller}
+        </span>
         <div class="bar-track"><div class="bar-fill ${siteClass(r.site)}" style="width:${barW}%"></div></div>
         <span class="price-num">${fmtEur(r.price_eur)}</span>
         ${bestTag}${outTag}
